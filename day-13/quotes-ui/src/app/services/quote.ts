@@ -17,4 +17,8 @@ export class QuoteService {
     const params = new HttpParams().set('page', 1).set('size', 100);
     return this.http.get<Quote[]>(QUOTES_URL, { params });
   }
+
+  getQuoteById(id: number): Observable<Quote> {
+    return this.http.get<Quote>(`${QUOTES_URL}/${id}`);
+  }
 }

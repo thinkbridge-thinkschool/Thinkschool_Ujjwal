@@ -1,0 +1,20 @@
+<div class="quote-detail">
+  @switch (state()) {
+    @case ('idle') {
+      <p class="status">Select a quote to see its details.</p>
+    }
+    @case ('loading') {
+      <p class="status">Loading...</p>
+    }
+    @case ('error') {
+      <p class="status error">Could not load that quote.</p>
+    }
+    @case ('loaded') {
+      @if (quote(); as q) {
+        <blockquote>{{ q.text }}</blockquote>
+        <p class="author">— {{ q.author }}</p>
+        <p class="meta">Quote #{{ q.id }}</p>
+      }
+    }
+  }
+</div>

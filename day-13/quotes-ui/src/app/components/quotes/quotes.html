@@ -19,7 +19,11 @@
       } @else {
         <ul class="quote-list">
           @for (quote of filteredQuotes(); track quote.id) {
-            <li class="quote-item">
+            <li
+              class="quote-item"
+              [class.selected]="quote.id === selectedId()"
+              (click)="onSelect(quote.id)"
+            >
               <blockquote>{{ quote.text }}</blockquote>
               <p class="author">— {{ quote.author }}</p>
             </li>
@@ -28,4 +32,6 @@
       }
     }
   }
+
+  <app-quote-detail [quoteId]="selectedId()" />
 </div>
