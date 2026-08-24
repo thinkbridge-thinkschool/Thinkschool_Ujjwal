@@ -6,18 +6,26 @@
     (input)="onFilterInput($event)"
   />
 
-  @if (loading()) {
-    <p class="status">Loading quotes...</p>
-  } @else if (filteredQuotes().length === 0) {
-    <p class="status">No quotes found.</p>
-  } @else {
-    <ul class="quote-list">
-      @for (quote of filteredQuotes(); track quote.id) {
-        <li class="quote-item">
-          <blockquote>{{ quote.text }}</blockquote>
-          <p class="author">— {{ quote.author }}</p>
-        </li>
+  @switch (loadState()) {
+    @case ('loading') {
+      <p class="status">Loading quotes...</p>
+    }
+    @case ('error') {
+      <p class="status error">Could not load quotes. Is the API running?</p>
+    }
+    @case ('loaded') {
+      @if (filteredQuotes().length === 0) {
+        <p class="status">No quotes found.</p>
+      } @else {
+        <ul class="quote-list">
+          @for (quote of filteredQuotes(); track quote.id) {
+            <li class="quote-item">
+              <blockquote>{{ quote.text }}</blockquote>
+              <p class="author">— {{ quote.author }}</p>
+            </li>
+          }
+        </ul>
       }
-    </ul>
+    }
   }
 </div>

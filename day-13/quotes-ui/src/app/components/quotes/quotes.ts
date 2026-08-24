@@ -1,6 +1,8 @@
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, effect, inject, signal } from '@angular/core';
 import { QuoteService } from '../../services/quote';
 import { Quote } from '../../models/quote.model';
+
+type LoadState = 'loading' | 'loaded' | 'error';
 
 @Component({
   selector: 'app-quotes',
@@ -11,10 +13,12 @@ import { Quote } from '../../models/quote.model';
 export class QuotesComponent implements OnInit {
   private readonly quoteService = inject(QuoteService);
 
-  protected readonly loading = signal(true);
+  protected readonly loadState = signal<LoadState>('loading');
   protected readonly quotes = signal<Quote[]>([]);
   protected readonly filter = signal('');
 
+  // Derived from the two signals above: recomputes whenever quotes are
+  // (re)loaded or the filter text changes.
   protected readonly filteredQuotes = computed(() => {
     const term = this.filter().trim().toLowerCase();
     const all = this.quotes();
@@ -27,14 +31,21 @@ export class QuotesComponent implements OnInit {
     );
   });
 
+  // Reacts to filteredQuotes (itself derived from quotes + filter), so the
+  // tab title stays in sync without any manual wiring in onFilterInput.
+  private readonly titleEffect = effect(() => {
+    const count = this.filteredQuotes().length;
+    document.title = count > 0 ? `Quotes (${count})` : 'Quotes';
+  });
+
   ngOnInit(): void {
     this.quoteService.getQuotes().subscribe({
       next: (quotes) => {
         this.quotes.set(quotes);
-        this.loading.set(false);
+        this.loadState.set('loaded');
       },
       error: () => {
-        this.loading.set(false);
+        this.loadState.set('error');
       },
     });
   }
