@@ -1,0 +1,23 @@
+<div class="quotes">
+  <input
+    class="filter-input"
+    type="text"
+    placeholder="Filter by author or text..."
+    (input)="onFilterInput($event)"
+  />
+
+  @if (loading()) {
+    <p class="status">Loading quotes...</p>
+  } @else if (filteredQuotes().length === 0) {
+    <p class="status">No quotes found.</p>
+  } @else {
+    <ul class="quote-list">
+      @for (quote of filteredQuotes(); track quote.id) {
+        <li class="quote-item">
+          <blockquote>{{ quote.text }}</blockquote>
+          <p class="author">— {{ quote.author }}</p>
+        </li>
+      }
+    </ul>
+  }
+</div>
