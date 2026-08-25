@@ -58,12 +58,25 @@ quote-mark, the text, and the author. Selecting a card shows its detail
 below the grid. One shared accent color, 1px borders, no shadows, consistent
 across the login page, navbar, cards, and the create-quote form.
 
-## Known gap
+## Verified live, not just by reading the code
 
-The a11y wiring (labels, `aria-invalid`/`aria-describedby`, focus-to-first-
-error) was verified by reading the rendered logic and Angular's own source
-(e.g. confirming `Validators.required` doesn't trim whitespace), plus
+Initially verified only by reading the rendered logic and Angular's own
+source (e.g. confirming `Validators.required` doesn't trim whitespace), plus
 curl-captured real server responses fed through the actual error-mapping
-code. It was **not** verified with a live keyboard pass, screen reader, or
-axe/Lighthouse audit - no browser was available in the environment this was
-built in. That pass is still owed before calling this fully verified.
+code - a live keyboard/screen-reader/axe pass was flagged as owed because no
+browser was available. Partway through the follow-up work on this form
+(rebuilding it with Signal Forms, see the `day14-signal-forms` branch), this
+environment turned out to support driving a real headless Chrome via
+Playwright against the system Chrome install. Went back and actually ran it:
+
+- **axe-core, WCAG 2A/2AA rules, against `<main>`: 0 violations.** Checked
+  both pristine and after an invalid submit with errors visible - not just
+  the clean state.
+- **Focus-to-first-invalid genuinely works.** After clicking submit on an
+  empty form, `document.activeElement.id` is `author-input` with
+  `aria-invalid="true"` - read from the live DOM, not inferred from the
+  `viewChild().focus()` call in the source.
+- **Keyboard reachability confirmed**: Tab from the top of the page reaches
+  the nav, then `author-input`, then `text-input`, then the submit button,
+  with no dead ends.
+- Zero console/page errors during the run.
