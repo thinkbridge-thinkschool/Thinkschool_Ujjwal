@@ -1,39 +1,45 @@
 @if (!auth.isLoggedIn()) {
   <div class="auth-page">
+    <div class="auth-page-glow" aria-hidden="true"></div>
     <div class="brand">
       <span class="brand-mark">❝</span>
-      <h1>Quotes</h1>
+      <h1>Quotes API</h1>
     </div>
     <app-login />
   </div>
 } @else {
   <nav class="navbar">
     <div class="navbar-inner">
-      <span class="brand-mark small">❝</span>
-      <button
-        type="button"
-        class="nav-link"
-        [class.active]="view() === 'quotes'"
-        (click)="setView('quotes')"
-      >
-        Quotes
-      </button>
-      <button
-        type="button"
-        class="nav-link"
-        [class.active]="view() === 'create'"
-        (click)="setView('create')"
-      >
-        Create quote
-      </button>
-      <button
-        type="button"
-        class="nav-link"
-        [class.active]="view() === 'create-signal'"
-        (click)="setView('create-signal')"
-      >
-        Create quote (Signal Forms)
-      </button>
+      <div class="navbar-brand">
+        <span class="brand-mark small">❝</span>
+        <span class="brand-word">Quotes API</span>
+      </div>
+      <div class="navbar-links">
+        <button
+          type="button"
+          class="nav-link"
+          [class.active]="view() === 'quotes'"
+          (click)="setView('quotes')"
+        >
+          Quotes
+        </button>
+        <button
+          type="button"
+          class="nav-link"
+          [class.active]="view() === 'create'"
+          (click)="setView('create')"
+        >
+          Create quote
+        </button>
+        <button
+          type="button"
+          class="nav-link"
+          [class.active]="view() === 'create-signal'"
+          (click)="setView('create-signal')"
+        >
+          Create quote (Signal Forms)
+        </button>
+      </div>
       <button type="button" class="nav-link logout" (click)="auth.logout()">Log out</button>
     </div>
   </nav>

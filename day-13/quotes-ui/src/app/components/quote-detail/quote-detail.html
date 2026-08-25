@@ -4,7 +4,7 @@
       <p class="status">Select a quote to see its details.</p>
     }
     @case ('loading') {
-      <p class="status">Loading...</p>
+      <p class="status"><span class="spinner" aria-hidden="true"></span> Loading...</p>
     }
     @case ('error') {
       <p class="status error">Could not load that quote.</p>

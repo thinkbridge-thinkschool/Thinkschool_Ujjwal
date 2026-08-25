@@ -54,6 +54,10 @@
   }
 
   <button type="submit" [disabled]="quoteForm().submitting()">
-    {{ quoteForm().submitting() ? 'Adding…' : 'Add quote' }}
+    @if (quoteForm().submitting()) {
+      <span class="spinner" aria-hidden="true"></span> Adding…
+    } @else {
+      Add quote
+    }
   </button>
 </form>

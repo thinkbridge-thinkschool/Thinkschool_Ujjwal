@@ -5,6 +5,7 @@
   border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: 2rem;
+  box-shadow: var(--shadow-md);
 }
 
 fieldset {
@@ -39,6 +40,13 @@ legend {
   border: 1px solid var(--border);
   border-radius: 8px;
   font: inherit;
+  transition: border-color var(--transition), box-shadow var(--transition);
+}
+
+.field input:focus,
+.field textarea:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
 }
 
 .field input[aria-invalid='true'],
@@ -77,10 +85,27 @@ button {
   color: #fff;
   font-weight: 600;
   cursor: pointer;
+  transition: background var(--transition), transform var(--transition), box-shadow var(--transition);
+}
+
+button:hover:not(:disabled) {
+  background: var(--accent-dark);
+  border-color: var(--accent-dark);
+  box-shadow: var(--shadow-sm);
+}
+
+button:active:not(:disabled) {
+  transform: scale(0.98);
 }
 
 button:disabled {
-  border-color: #b5b5c2;
-  background: #b5b5c2;
+  border-color: #cfcdc2;
+  background: #cfcdc2;
   cursor: not-allowed;
+}
+
+@media (max-width: 640px) {
+  .quote-form {
+    padding: 1.5rem;
+  }
 }

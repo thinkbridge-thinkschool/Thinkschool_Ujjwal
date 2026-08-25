@@ -11,6 +11,7 @@
   border-radius: 8px;
   font: inherit;
   background: var(--surface);
+  transition: border-color var(--transition), box-shadow var(--transition);
 }
 
 .filter-input:focus-visible {
@@ -18,9 +19,14 @@
   outline-offset: 1px;
 }
 
+.filter-input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
 .quote-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(240px, 100%), 1fr));
   gap: 1rem;
   margin-bottom: 2rem;
 }
@@ -36,10 +42,14 @@
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+  transition: transform var(--transition), box-shadow var(--transition), border-color var(--transition);
+  animation: fade-rise 0.3s ease-out;
 }
 
 .quote-card:hover {
   border-color: var(--accent);
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-md);
 }
 
 .quote-card.selected {
@@ -54,7 +64,7 @@
 
 .quote-mark {
   font-size: 1.5rem;
-  color: var(--accent);
+  color: var(--gold);
   line-height: 1;
 }
 
@@ -74,6 +84,9 @@
 
 .status {
   color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .status.error {

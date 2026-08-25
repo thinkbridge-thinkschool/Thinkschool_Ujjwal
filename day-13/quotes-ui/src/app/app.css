@@ -5,6 +5,21 @@
   align-items: center;
   justify-content: center;
   gap: 1.5rem;
+  padding: 1.5rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.auth-page-glow {
+  position: absolute;
+  top: -20%;
+  left: 50%;
+  width: 60rem;
+  height: 60rem;
+  transform: translateX(-50%);
+  background: radial-gradient(closest-side, var(--accent-soft), transparent);
+  pointer-events: none;
+  z-index: 0;
 }
 
 .brand {
@@ -12,36 +27,74 @@
   flex-direction: column;
   align-items: center;
   gap: 0.25rem;
+  position: relative;
+  z-index: 1;
+  animation: fade-rise 0.4s ease-out;
 }
 
 .brand h1 {
   margin: 0;
   font-size: 1.5rem;
+  letter-spacing: -0.01em;
 }
 
 .brand-mark {
   font-size: 2.5rem;
-  color: var(--accent);
+  color: var(--gold);
   line-height: 1;
 }
 
+.auth-page > app-login {
+  position: relative;
+  z-index: 1;
+  animation: fade-rise 0.45s ease-out 0.05s backwards;
+}
+
 .navbar {
-  background: var(--surface);
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
+  backdrop-filter: blur(10px);
   border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 10;
 }
 
 .navbar-inner {
-  max-width: 860px;
+  max-width: 900px;
   margin: 0 auto;
   padding: 0.75rem 1.5rem;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.75rem;
+}
+
+.navbar-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-shrink: 0;
 }
 
 .navbar .brand-mark.small {
-  font-size: 1.5rem;
-  margin-right: 0.5rem;
+  font-size: 1.4rem;
+  color: var(--gold);
+}
+
+.brand-word {
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.navbar-links {
+  display: flex;
+  gap: 0.35rem;
+  overflow-x: auto;
+  scrollbar-width: none;
+  min-width: 0;
+}
+
+.navbar-links::-webkit-scrollbar {
+  display: none;
 }
 
 .nav-link {
@@ -53,11 +106,17 @@
   padding: 0.5rem 0.9rem;
   color: var(--text-muted);
   cursor: pointer;
+  white-space: nowrap;
+  transition: background var(--transition), color var(--transition), transform var(--transition);
 }
 
 .nav-link:hover {
   background: var(--accent-soft);
   color: var(--accent-dark);
+}
+
+.nav-link:active {
+  transform: scale(0.97);
 }
 
 .nav-link.active {
@@ -73,14 +132,33 @@
 .nav-link.logout {
   margin-left: auto;
   color: var(--danger);
+  flex-shrink: 0;
 }
 
 .nav-link.logout:hover {
-  background: #fdecec;
+  background: var(--danger-soft);
 }
 
 .page {
-  max-width: 860px;
+  max-width: 900px;
   margin: 0 auto;
   padding: 2rem 1.5rem 4rem;
+}
+
+.page > * {
+  animation: fade-rise 0.25s ease-out;
+}
+
+@media (max-width: 640px) {
+  .navbar-inner {
+    padding: 0.65rem 1rem;
+  }
+
+  .brand-word {
+    display: none;
+  }
+
+  .page {
+    padding: 1.25rem 1rem 3rem;
+  }
 }

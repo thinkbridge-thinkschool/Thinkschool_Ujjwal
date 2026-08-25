@@ -8,7 +8,7 @@
 
   @switch (loadState()) {
     @case ('loading') {
-      <p class="status">Loading quotes...</p>
+      <p class="status"><span class="spinner" aria-hidden="true"></span> Loading quotes...</p>
     }
     @case ('error') {
       <p class="status error">Could not load quotes. Is the API running?</p>

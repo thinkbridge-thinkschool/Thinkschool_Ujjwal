@@ -21,7 +21,11 @@
   }
 
   <button type="submit" [disabled]="submitting()">
-    {{ submitting() ? 'Please wait…' : mode() === 'sign-in' ? 'Log in' : 'Create account' }}
+    @if (submitting()) {
+      <span class="spinner" aria-hidden="true"></span> Please wait…
+    } @else {
+      {{ mode() === 'sign-in' ? 'Log in' : 'Create account' }}
+    }
   </button>
 
   <button type="button" class="toggle-link" (click)="toggleMode()">
