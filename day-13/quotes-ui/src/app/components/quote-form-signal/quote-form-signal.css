@@ -1,0 +1,88 @@
+.quote-form {
+  max-width: 520px;
+  margin: 0 auto;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 2rem;
+}
+
+fieldset {
+  border: none;
+  padding: 0;
+  margin: 0 0 1.25rem;
+}
+
+legend {
+  font-weight: 700;
+  font-size: 1.2rem;
+  padding: 0 0 1rem;
+}
+
+.field {
+  margin-bottom: 1.25rem;
+}
+
+.field label {
+  display: block;
+  margin-bottom: 0.4rem;
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+.field input,
+.field textarea {
+  width: 100%;
+  padding: 0.65rem 0.8rem;
+  box-sizing: border-box;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font: inherit;
+}
+
+.field input[aria-invalid='true'],
+.field textarea[aria-invalid='true'] {
+  border-color: var(--danger);
+}
+
+.field input:focus-visible,
+.field textarea:focus-visible,
+button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.field-error {
+  color: var(--danger);
+  margin: 0.4rem 0 0;
+  font-size: 0.9rem;
+}
+
+.field-status {
+  color: var(--text-muted);
+  margin: 0.3rem 0 0;
+  font-size: 0.78rem;
+  font-family: monospace;
+}
+
+.form-error {
+  color: var(--danger);
+  margin: 0 0 1rem;
+}
+
+button {
+  padding: 0.65rem 1.25rem;
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+  background: var(--accent);
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+button:disabled {
+  border-color: #b5b5c2;
+  background: #b5b5c2;
+  cursor: not-allowed;
+}

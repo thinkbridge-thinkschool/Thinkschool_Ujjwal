@@ -1,0 +1,47 @@
+<form class="quote-form" (submit)="$event.preventDefault(); onSubmit()" novalidate>
+  <fieldset>
+    <legend>Add a quote (Signal Forms preview)</legend>
+
+    <div class="field">
+      <label for="author-input-sf">Author</label>
+      <input
+        id="author-input-sf"
+        type="text"
+        [formField]="quoteForm.author"
+        [attr.aria-invalid]="showFieldError('author') ? true : null"
+        [attr.aria-describedby]="showFieldError('author') ? 'author-error-sf' : null"
+      />
+      @if (showFieldError('author')) {
+        <p id="author-error-sf" class="field-error" role="alert">{{ fieldErrorMessage('author') }}</p>
+      }
+      <p class="field-status">
+        touched: {{ quoteForm.author().touched() }} · dirty: {{ quoteForm.author().dirty() }}
+      </p>
+    </div>
+
+    <div class="field">
+      <label for="text-input-sf">Text</label>
+      <textarea
+        id="text-input-sf"
+        rows="3"
+        [formField]="quoteForm.text"
+        [attr.aria-invalid]="showFieldError('text') ? true : null"
+        [attr.aria-describedby]="showFieldError('text') ? 'text-error-sf' : null"
+      ></textarea>
+      @if (showFieldError('text')) {
+        <p id="text-error-sf" class="field-error" role="alert">{{ fieldErrorMessage('text') }}</p>
+      }
+      <p class="field-status">
+        touched: {{ quoteForm.text().touched() }} · dirty: {{ quoteForm.text().dirty() }}
+      </p>
+    </div>
+  </fieldset>
+
+  @if (formError()) {
+    <p class="form-error" role="alert">{{ formError() }}</p>
+  }
+
+  <button type="submit" [disabled]="quoteForm().submitting()">
+    {{ quoteForm().submitting() ? 'Adding…' : 'Add quote' }}
+  </button>
+</form>

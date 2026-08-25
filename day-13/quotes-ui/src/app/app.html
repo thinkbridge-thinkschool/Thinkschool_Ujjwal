@@ -26,6 +26,14 @@
       >
         Create quote
       </button>
+      <button
+        type="button"
+        class="nav-link"
+        [class.active]="view() === 'create-signal'"
+        (click)="setView('create-signal')"
+      >
+        Create quote (Signal Forms)
+      </button>
       <button type="button" class="nav-link logout" (click)="auth.logout()">Log out</button>
     </div>
   </nav>
@@ -37,6 +45,9 @@
       }
       @case ('create') {
         <app-quote-form (quoteCreated)="onQuoteCreated()" />
+      }
+      @case ('create-signal') {
+        <app-quote-form-signal (quoteCreated)="onQuoteCreated()" />
       }
     }
   </main>
