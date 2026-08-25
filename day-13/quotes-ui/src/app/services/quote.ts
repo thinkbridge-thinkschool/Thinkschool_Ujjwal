@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { Quote } from '../models/quote.model';
+import { CreateQuoteRequest, Quote } from '../models/quote.model';
 
 const QUOTES_URL = 'http://localhost:5296/api/quotes';
 
@@ -20,5 +20,9 @@ export class QuoteService {
 
   getQuoteById(id: number): Observable<Quote> {
     return this.http.get<Quote>(`${QUOTES_URL}/${id}`);
+  }
+
+  createQuote(request: CreateQuoteRequest): Observable<Quote> {
+    return this.http.post<Quote>(QUOTES_URL, request);
   }
 }

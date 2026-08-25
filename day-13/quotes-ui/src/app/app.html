@@ -1,1 +1,43 @@
-<app-quotes />
+@if (!auth.isLoggedIn()) {
+  <div class="auth-page">
+    <div class="brand">
+      <span class="brand-mark">❝</span>
+      <h1>Quotes</h1>
+    </div>
+    <app-login />
+  </div>
+} @else {
+  <nav class="navbar">
+    <div class="navbar-inner">
+      <span class="brand-mark small">❝</span>
+      <button
+        type="button"
+        class="nav-link"
+        [class.active]="view() === 'quotes'"
+        (click)="setView('quotes')"
+      >
+        Quotes
+      </button>
+      <button
+        type="button"
+        class="nav-link"
+        [class.active]="view() === 'create'"
+        (click)="setView('create')"
+      >
+        Create quote
+      </button>
+      <button type="button" class="nav-link logout" (click)="auth.logout()">Log out</button>
+    </div>
+  </nav>
+
+  <main class="page">
+    @switch (view()) {
+      @case ('quotes') {
+        <app-quotes />
+      }
+      @case ('create') {
+        <app-quote-form (quoteCreated)="onQuoteCreated()" />
+      }
+    }
+  </main>
+}

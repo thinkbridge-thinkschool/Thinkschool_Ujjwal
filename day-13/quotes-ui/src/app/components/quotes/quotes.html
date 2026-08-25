@@ -17,18 +17,21 @@
       @if (filteredQuotes().length === 0) {
         <p class="status">No quotes found.</p>
       } @else {
-        <ul class="quote-list">
+        <div class="quote-grid">
           @for (quote of filteredQuotes(); track quote.id) {
-            <li
-              class="quote-item"
+            <button
+              type="button"
+              class="quote-card"
               [class.selected]="quote.id === selectedId()"
+              [attr.aria-pressed]="quote.id === selectedId()"
               (click)="onSelect(quote.id)"
             >
+              <span class="quote-mark">❝</span>
               <blockquote>{{ quote.text }}</blockquote>
               <p class="author">— {{ quote.author }}</p>
-            </li>
+            </button>
           }
-        </ul>
+        </div>
       }
     }
   }

@@ -1,0 +1,50 @@
+<form class="quote-form" [formGroup]="form" (ngSubmit)="onSubmit()" novalidate>
+  <fieldset>
+    <legend>Add a quote</legend>
+
+    <div class="field">
+      <label for="author-input">Author</label>
+      <input
+        id="author-input"
+        type="text"
+        formControlName="author"
+        #authorInput
+        [attr.aria-invalid]="showFieldError('author') ? true : null"
+        [attr.aria-describedby]="showFieldError('author') ? 'author-error' : null"
+      />
+      @if (showFieldError('author')) {
+        <p id="author-error" class="field-error" role="alert">{{ fieldErrorMessage('author') }}</p>
+      }
+    </div>
+
+    <div class="field">
+      <label for="text-input">Text</label>
+      <textarea
+        id="text-input"
+        rows="3"
+        formControlName="text"
+        #textInput
+        [attr.aria-invalid]="showFieldError('text') ? true : null"
+        [attr.aria-describedby]="showFieldError('text') ? 'text-error' : null"
+      ></textarea>
+      @if (showFieldError('text')) {
+        <p id="text-error" class="field-error" role="alert">{{ fieldErrorMessage('text') }}</p>
+      }
+    </div>
+  </fieldset>
+
+  @switch (state()) {
+    @case ('error') {
+      @if (formError()) {
+        <p class="form-error" role="alert">{{ formError() }}</p>
+      }
+    }
+    @case ('success') {
+      <p class="form-success" aria-live="polite">Quote added.</p>
+    }
+  }
+
+  <button type="submit" [disabled]="state() === 'submitting'">
+    {{ state() === 'submitting' ? 'Adding…' : 'Add quote' }}
+  </button>
+</form>
