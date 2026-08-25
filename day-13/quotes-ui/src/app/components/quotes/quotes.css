@@ -2,6 +2,22 @@
   max-width: 100%;
 }
 
+.quotes-header {
+  margin-bottom: 1.5rem;
+}
+
+.quotes-header h2 {
+  font-family: var(--font-serif);
+  font-weight: 600;
+  font-size: 1.9rem;
+  margin: 0 0 0.15rem;
+}
+
+.quotes-subtitle {
+  margin: 0;
+  color: var(--text-muted);
+}
+
 .filter-input {
   width: 100%;
   padding: 0.65rem 0.9rem;
@@ -32,6 +48,8 @@
 }
 
 .quote-card {
+  position: relative;
+  overflow: hidden;
   text-align: left;
   font: inherit;
   background: var(--surface);
@@ -43,7 +61,7 @@
   flex-direction: column;
   gap: 0.5rem;
   transition: transform var(--transition), box-shadow var(--transition), border-color var(--transition);
-  animation: fade-rise 0.3s ease-out;
+  animation: fade-rise 0.35s ease-out both;
 }
 
 .quote-card:hover {
@@ -62,19 +80,34 @@
   outline-offset: 2px;
 }
 
+.card-watermark {
+  position: absolute;
+  top: -1.5rem;
+  right: -0.5rem;
+  font-size: 6rem;
+  z-index: 0;
+}
+
 .quote-mark {
+  position: relative;
+  z-index: 1;
   font-size: 1.5rem;
   color: var(--gold);
   line-height: 1;
 }
 
 .quote-card blockquote {
+  position: relative;
+  z-index: 1;
   margin: 0;
-  font-size: 0.95rem;
-  line-height: 1.4;
+  font-family: var(--font-serif);
+  font-size: 1.02rem;
+  line-height: 1.45;
 }
 
 .author {
+  position: relative;
+  z-index: 1;
   margin: 0;
   color: var(--text-muted);
   font-style: italic;

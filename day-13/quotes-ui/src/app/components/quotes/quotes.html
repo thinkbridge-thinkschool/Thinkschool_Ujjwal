@@ -1,4 +1,11 @@
 <div class="quotes">
+  <header class="quotes-header">
+    <h2>Your quotes</h2>
+    <p class="quotes-subtitle">
+      {{ quotes().length }} quote{{ quotes().length === 1 ? '' : 's' }} in the collection
+    </p>
+  </header>
+
   <input
     class="filter-input"
     type="text"
@@ -18,15 +25,17 @@
         <p class="status">No quotes found.</p>
       } @else {
         <div class="quote-grid">
-          @for (quote of filteredQuotes(); track quote.id) {
+          @for (quote of filteredQuotes(); track quote.id; let i = $index) {
             <button
               type="button"
               class="quote-card"
               [class.selected]="quote.id === selectedId()"
               [attr.aria-pressed]="quote.id === selectedId()"
+              [style.animation-delay.ms]="i * 25 > 300 ? 300 : i * 25"
               (click)="onSelect(quote.id)"
             >
-              <span class="quote-mark">❝</span>
+              <span class="card-watermark watermark-quote" aria-hidden="true">❝</span>
+              <span class="quote-mark" aria-hidden="true">❝</span>
               <blockquote>{{ quote.text }}</blockquote>
               <p class="author">— {{ quote.author }}</p>
             </button>

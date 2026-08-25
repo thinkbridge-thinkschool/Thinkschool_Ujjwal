@@ -11,6 +11,8 @@
     }
     @case ('loaded') {
       @if (quote(); as q) {
+        <span class="card-watermark watermark-quote" aria-hidden="true">❝</span>
+        <p class="eyebrow">Spotlight</p>
         <blockquote>{{ q.text }}</blockquote>
         <p class="author">— {{ q.author }}</p>
         <p class="meta">Quote #{{ q.id }}</p>
