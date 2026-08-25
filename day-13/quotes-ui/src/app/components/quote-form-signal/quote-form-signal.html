@@ -1,4 +1,16 @@
 <form class="quote-form" (submit)="$event.preventDefault(); onSubmit()" novalidate>
+  <div class="preview-note">
+    <p>
+      This is an experimental version of the Create Quote form, built to try
+      out a newer way of handling forms in Angular. It works the same way,
+      with two small differences:
+    </p>
+    <ul>
+      <li>Author and Text stop you from typing past their character limit as you go, instead of only telling you after you submit.</li>
+      <li>If you submit without filling them in, it won't automatically jump your cursor to the first empty field.</li>
+    </ul>
+  </div>
+
   <fieldset>
     <legend>Add a quote (Signal Forms preview)</legend>
 
