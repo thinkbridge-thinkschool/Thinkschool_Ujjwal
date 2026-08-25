@@ -58,15 +58,23 @@ quote-mark, the text, and the author. Selecting a card shows its detail
 below the grid. One shared accent color, 1px borders, no shadows, consistent
 across the login page, navbar, cards, and the create-quote form.
 
-## Known gap
+## Verified live, not just by reading the code
 
-The a11y wiring (labels, `aria-invalid`/`aria-describedby`, focus-to-first-
-error) was verified by reading the rendered logic and Angular's own source
-(e.g. confirming `Validators.required` doesn't trim whitespace), plus
-curl-captured real server responses fed through the actual error-mapping
-code. It was **not** verified with a live keyboard pass, screen reader, or
-axe/Lighthouse audit - no browser was available in the environment this was
-built in. That pass is still owed before calling this fully verified.
+Driven with a real headless Chrome (Playwright against the system Chrome
+install, no browser download needed) after the environment turned out to
+support it partway through this work - the a11y pass flagged below as owed
+is no longer owed:
+
+- **axe-core, WCAG 2A/2AA rules, against `<main>`: 0 violations.** Both
+  pristine and after an invalid submit (errors visible, `aria-invalid`
+  present) - checked both states, not just the clean one.
+- **Focus-to-first-invalid actually works.** After clicking submit on an
+  empty form, `document.activeElement.id` is `author-input` and its
+  `aria-invalid` is `"true"` - confirmed in the live DOM, not inferred from
+  the `viewChild().focus()` call in the source.
+- **Keyboard reachability confirmed**: pressing Tab from the top of the page
+  reaches the nav buttons, then `author-input`, then `text-input`, then the
+  submit button, with no dead ends.
 
 ## Piece 2 — the same form, rebuilt with Signal Forms preview
 
@@ -85,7 +93,7 @@ Before writing any of it, the actual preview API was read from
 to name the wrong directive (`[control]` in an example vs. the real
 `[formField]`/`FormField`).
 
-### Two things checked and caught before shipping, not guessed
+### Three things checked and caught, not guessed - one of them only surfaced in a real browser
 
 - **`required()` has the same whitespace gap as `Validators.required`.**
   Read the compiled source directly: `isEmpty(value)` is
@@ -102,6 +110,14 @@ to name the wrong directive (`[control]` in an example vs. the real
   onto the DOM element). `aria-invalid` and `aria-describedby` are not in
   that list. Checked before writing the template, so the form still hand-wires
   both exactly as the reactive version does - full a11y is not free here.
+- **Duplicate error text, only visible with a real submit.** `required()`
+  and the supplementary whitespace `validate()` both fired on a fully empty
+  field, producing "Author is required. Author is required." - reading the
+  code alone didn't surface this since each validator's logic was correct in
+  isolation; it only showed up once a headless browser actually submitted an
+  empty form and the rendered error text was inspected. Fixed by guarding the
+  whitespace check to skip the exact-empty case (`v !== '' && ...`), which
+  `required()` already owns.
 
 ### Where it's actually simpler than the reactive version
 
@@ -123,24 +139,35 @@ to name the wrong directive (`[control]` in an example vs. the real
 - No automatic a11y wiring (above) - it looks like it should be closer to
   parity with a component-based UI library than it is.
 - The whitespace gap in `required()` (above) is the same trap as reactive
-  forms', just less expected in a newer API.
+  forms', just less expected in a newer API - and combining it with
+  `required()` naively double-reported the error until a real submit
+  surfaced that.
+- No focus-management on invalid submit. The reactive version moves focus
+  to the first invalid control (confirmed live: `document.activeElement`
+  actually becomes `author-input`); this piece's brief didn't ask for the
+  same on the Signal Forms rebuild, so it doesn't have it - confirmed live
+  too: focus stays on the submit button after a failed submit. Genuine gap
+  versus the reactive version, not an oversight to gloss over.
 - Far less community precedent - most patterns here came from reading
   `.d.ts`/`.mjs` source directly rather than established docs or Stack
   Overflow answers, which is a real cost for anyone maintaining this later.
 
-### Verified
+### Verified live
 
-- Empty/whitespace submit: both fields' `validate()` trims and rejects,
-  matching the server exactly (confirmed via curl in this session).
-- `touched()`/`dirty()` are rendered live in the template
-  (`touched: {{ … }} · dirty: {{ … }}` under each field) rather than only
-  asserted - visible signal state, not a claim about state.
-- Clean submit: `POST /api/quotes` with `{author, text}` only (the shape
-  `field().value()` actually produces) returned `201` with the full `Quote`
-  in this session's verification.
-- Failed submit (400): curl-captured real `ValidationProblem` body fed
-  through the same field-targeting logic the component uses, confirming
-  `author`/`text` map to `quoteForm.author`/`quoteForm.text` and not the
-  reverse.
-- **Not verified**: a live keyboard pass or axe/Lighthouse audit - same
-  environment limitation as Piece 1, not glossed over here either.
+- **axe-core, WCAG 2A/2AA, against `<main>`: 0 violations** - pristine and
+  after an invalid submit with errors visible, same as the reactive form.
+- Empty submit: real headless-browser run shows `aria-invalid="true"` and
+  `aria-describedby="author-error-sf"` on the author input, error text
+  "Author is required." (singular, after the duplicate-message fix above),
+  `touched: true · dirty: false` rendered live under the field.
+- Whitespace-only author, valid text: same single "Author is required."
+  error, confirming the fix generalizes past the fully-empty case.
+- **Native `maxlength` enforcement confirmed empirically, not just from
+  reading the compiled source**: typed 250 `"A"` characters into the author
+  field in a real browser: the input's actual value length is 200. The
+  browser truncated it without any code checking for it.
+- Clean submit: filled both fields, clicked submit, the app switched back
+  to the Quotes view and the new quote appeared in the card grid - the
+  full round trip, not just the isolated `201` from curl.
+- Zero console/page errors across the entire run (login, both forms, both
+  invalid and valid submits).
