@@ -59,4 +59,14 @@ export class QuotesComponent implements OnInit {
   onSelect(id: number): void {
     this.selectedId.set(id);
   }
+
+  onQuoteDeleted(id: number): void {
+    // Replace with a new array reference - pushing/splicing the existing
+    // array would mutate in place and, under zoneless, not trigger a
+    // re-render.
+    this.quotes.set(this.quotes().filter((q) => q.id !== id));
+    if (this.selectedId() === id) {
+      this.selectedId.set(null);
+    }
+  }
 }

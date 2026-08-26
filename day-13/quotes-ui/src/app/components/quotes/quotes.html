@@ -45,5 +45,5 @@
     }
   }
 
-  <app-quote-detail [quoteId]="selectedId()" />
+  <app-quote-detail [quoteId]="selectedId()" (quoteDeleted)="onQuoteDeleted($event)" />
 </div>

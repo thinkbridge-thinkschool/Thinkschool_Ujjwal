@@ -1,5 +1,7 @@
-import { Component, effect, inject, input, signal } from '@angular/core';
+import { Component, computed, effect, inject, input, output, signal } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import { QuoteService } from '../../services/quote';
+import { AuthService } from '../../services/auth';
 import { Quote } from '../../models/quote.model';
 
 type DetailState = 'idle' | 'loading' | 'loaded' | 'error';
@@ -12,11 +14,25 @@ type DetailState = 'idle' | 'loading' | 'loaded' | 'error';
 })
 export class QuoteDetailComponent {
   private readonly quoteService = inject(QuoteService);
+  private readonly auth = inject(AuthService);
 
   readonly quoteId = input<number | null>(null);
+  readonly quoteDeleted = output<number>();
 
   protected readonly state = signal<DetailState>('idle');
   protected readonly quote = signal<Quote | null>(null);
+
+  protected readonly deleting = signal(false);
+  protected readonly deleteError = signal<string | null>(null);
+
+  // DELETE /api/quotes/{id} requires ownership server-side (matched against
+  // the JWT's sub claim), so only show the control when it would actually
+  // succeed - not as a security boundary, just to avoid an inevitable 403.
+  protected readonly canDelete = computed(() => {
+    const q = this.quote();
+    const userId = this.auth.currentUserId();
+    return q !== null && userId !== null && q.createdByUserId === userId;
+  });
 
   // Re-fetches whenever quoteId changes. Selecting quotes fast enough that
   // two requests are in flight at once is a real race: whichever response
@@ -25,6 +41,7 @@ export class QuoteDetailComponent {
   // any response that resolves after a newer selection has already landed.
   private readonly fetchEffect = effect(() => {
     const id = this.quoteId();
+    this.deleteError.set(null);
 
     if (id === null) {
       this.state.set('idle');
@@ -47,4 +64,31 @@ export class QuoteDetailComponent {
       },
     });
   });
+
+  onDelete(): void {
+    const q = this.quote();
+    if (!q || this.deleting()) return;
+
+    if (!confirm('Delete this quote? This cannot be undone.')) {
+      return;
+    }
+
+    this.deleting.set(true);
+    this.deleteError.set(null);
+
+    this.quoteService.deleteQuote(q.id).subscribe({
+      next: () => {
+        this.deleting.set(false);
+        this.quoteDeleted.emit(q.id);
+      },
+      error: (err: HttpErrorResponse) => {
+        this.deleting.set(false);
+        this.deleteError.set(
+          err.status === 403
+            ? 'You can only delete quotes you created.'
+            : 'Could not delete this quote. Please try again.',
+        );
+      },
+    });
+  }
 }

@@ -25,4 +25,8 @@ export class QuoteService {
   createQuote(request: CreateQuoteRequest): Observable<Quote> {
     return this.http.post<Quote>(QUOTES_URL, request);
   }
+
+  deleteQuote(id: number): Observable<void> {
+    return this.http.delete<void>(`${QUOTES_URL}/${id}`);
+  }
 }

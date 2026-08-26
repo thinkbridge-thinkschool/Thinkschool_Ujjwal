@@ -65,3 +65,33 @@
 .status.error {
   color: var(--danger);
 }
+
+.delete-btn {
+  position: relative;
+  z-index: 1;
+  margin-top: 0.75rem;
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--danger);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--danger);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--transition), color var(--transition);
+}
+
+.delete-btn:hover:not(:disabled) {
+  background: var(--danger-soft);
+}
+
+.delete-btn:focus-visible {
+  outline: 2px solid var(--danger);
+  outline-offset: 1px;
+}
+
+.delete-btn:disabled {
+  border-color: #cfcdc2;
+  color: #9a9890;
+  cursor: not-allowed;
+}

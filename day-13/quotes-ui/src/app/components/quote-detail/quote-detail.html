@@ -16,6 +16,15 @@
         <blockquote>{{ q.text }}</blockquote>
         <p class="author">— {{ q.author }}</p>
         <p class="meta">Quote #{{ q.id }}</p>
+
+        @if (canDelete()) {
+          @if (deleteError()) {
+            <p class="status error" role="alert">{{ deleteError() }}</p>
+          }
+          <button type="button" class="delete-btn" [disabled]="deleting()" (click)="onDelete()">
+            {{ deleting() ? 'Deleting…' : 'Delete quote' }}
+          </button>
+        }
       }
     }
   }
