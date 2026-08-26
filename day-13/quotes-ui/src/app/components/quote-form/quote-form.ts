@@ -6,11 +6,11 @@ import {
   signal,
   viewChild,
 } from '@angular/core';
-import { HttpErrorResponse } from '@angular/common/http';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { QuoteService } from '../../services/quote';
-import { Quote, ValidationProblemBody } from '../../models/quote.model';
+import { Quote } from '../../models/quote.model';
 import { notBlank } from './not-blank.validator';
+import { AppHttpError } from '../../http/app-http-error';
 
 type SubmitState = 'idle' | 'submitting' | 'success' | 'error';
 
@@ -95,43 +95,30 @@ export class QuoteFormComponent {
         this.quoteCreated.emit(quote);
         this.form.reset({ author: '', text: '' });
       },
-      error: (err: HttpErrorResponse) => {
+      error: (err: AppHttpError) => {
         this.state.set('error');
         this.applyServerError(err);
       },
     });
   }
 
-  private applyServerError(err: HttpErrorResponse): void {
-    if (err.status === 400) {
-      const body = err.error as ValidationProblemBody;
-      const fieldErrors = body?.errors;
-      if (fieldErrors && Object.keys(fieldErrors).length > 0) {
-        let mapped = false;
-        for (const [field, messages] of Object.entries(fieldErrors)) {
-          const control = this.form.controls[field as 'author' | 'text'];
-          if (control) {
-            control.setErrors({ ...control.errors, server: messages.join(' ') });
-            control.markAsTouched();
-            mapped = true;
-          }
+  private applyServerError(err: AppHttpError): void {
+    const fieldErrors = err.fieldErrors;
+    if (fieldErrors && Object.keys(fieldErrors).length > 0) {
+      let mapped = false;
+      for (const [field, messages] of Object.entries(fieldErrors)) {
+        const control = this.form.controls[field as 'author' | 'text'];
+        if (control) {
+          control.setErrors({ ...control.errors, server: messages.join(' ') });
+          control.markAsTouched();
+          mapped = true;
         }
-        if (mapped) {
-          return;
-        }
+      }
+      if (mapped) {
+        return;
       }
     }
 
-    if (err.status === 401) {
-      this.formError.set('You are not signed in, so the API rejected this quote (401 Unauthorized).');
-      return;
-    }
-
-    if (err.status === 0) {
-      this.formError.set('Could not reach the API. Is it running?');
-      return;
-    }
-
-    this.formError.set(`Could not add the quote (server responded ${err.status}).`);
+    this.formError.set(err.friendlyMessage);
   }
 }

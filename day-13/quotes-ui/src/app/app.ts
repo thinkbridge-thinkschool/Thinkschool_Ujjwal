@@ -23,8 +23,12 @@ export class App {
   }
 
   onQuoteCreated(): void {
-    // Hand back to the list view - QuotesComponent re-mounts and refetches,
-    // so the new quote shows up without threading state between the two.
-    this.view.set('quotes');
+    // quoteCreated.emit() runs synchronously inside the same handler that
+    // sets QuoteFormComponent's state to 'success', so switching the view
+    // immediately unmounts the form before its "Quote added." message ever
+    // paints a frame - found live (Playwright screenshot showed no success
+    // text despite the quote being created). Delay handing back to the list
+    // view so the confirmation is actually visible first.
+    setTimeout(() => this.view.set('quotes'), 900);
   }
 }

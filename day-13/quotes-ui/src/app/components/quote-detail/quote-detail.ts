@@ -1,8 +1,8 @@
 import { Component, computed, effect, inject, input, output, signal } from '@angular/core';
-import { HttpErrorResponse } from '@angular/common/http';
 import { QuoteService } from '../../services/quote';
 import { AuthService } from '../../services/auth';
 import { Quote } from '../../models/quote.model';
+import { AppHttpError } from '../../http/app-http-error';
 
 type DetailState = 'idle' | 'loading' | 'loaded' | 'error';
 
@@ -81,12 +81,13 @@ export class QuoteDetailComponent {
         this.deleting.set(false);
         this.quoteDeleted.emit(q.id);
       },
-      error: (err: HttpErrorResponse) => {
+      error: (err: AppHttpError) => {
         this.deleting.set(false);
+        // 403 specifically means ownership mismatch here (delete requires
+        // the JWT sub to match createdByUserId) - more precise than the
+        // interceptor's generic "don't have permission" copy.
         this.deleteError.set(
-          err.status === 403
-            ? 'You can only delete quotes you created.'
-            : 'Could not delete this quote. Please try again.',
+          err.status === 403 ? 'You can only delete quotes you created.' : err.friendlyMessage,
         );
       },
     });

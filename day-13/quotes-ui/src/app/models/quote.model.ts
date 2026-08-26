@@ -11,8 +11,3 @@ export interface CreateQuoteRequest {
   author: string;
   text: string;
 }
-
-// The shape of ASP.NET's Results.ValidationProblem(errors) response.
-export interface ValidationProblemBody {
-  errors?: Record<string, string[]>;
-}

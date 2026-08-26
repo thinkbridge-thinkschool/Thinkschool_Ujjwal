@@ -1,8 +1,8 @@
 import { Component, inject, output, signal } from '@angular/core';
-import { HttpErrorResponse } from '@angular/common/http';
 import { FormField, form, maxLength, required, requiredError, submit, validate } from '@angular/forms/signals';
 import { QuoteService } from '../../services/quote';
-import { Quote, ValidationProblemBody } from '../../models/quote.model';
+import { Quote } from '../../models/quote.model';
+import { AppHttpError } from '../../http/app-http-error';
 
 @Component({
   selector: 'app-quote-form-signal',
@@ -77,33 +77,28 @@ export class QuoteFormSignalComponent {
           this.model.set({ author: '', text: '' });
           return undefined;
         } catch (err) {
-          return this.mapServerError(err as HttpErrorResponse);
+          return this.mapServerError(err as AppHttpError);
         }
       },
     });
   }
 
-  private mapServerError(err: HttpErrorResponse) {
-    if (err.status === 400) {
-      const fieldErrors = (err.error as ValidationProblemBody)?.errors;
-      if (fieldErrors && Object.keys(fieldErrors).length > 0) {
-        return Object.entries(fieldErrors)
-          .filter(([field]) => field === 'author' || field === 'text')
-          .map(([field, messages]) => ({
-            fieldTree: this.quoteForm[field as 'author' | 'text'],
-            kind: 'server',
-            message: messages.join(' '),
-          }));
+  private mapServerError(err: AppHttpError) {
+    const fieldErrors = err.fieldErrors;
+    if (fieldErrors && Object.keys(fieldErrors).length > 0) {
+      const mapped = Object.entries(fieldErrors)
+        .filter(([field]) => field === 'author' || field === 'text')
+        .map(([field, messages]) => ({
+          fieldTree: this.quoteForm[field as 'author' | 'text'],
+          kind: 'server',
+          message: messages.join(' '),
+        }));
+      if (mapped.length > 0) {
+        return mapped;
       }
     }
 
-    this.formError.set(
-      err.status === 401
-        ? 'You are not signed in, so the API rejected this quote (401 Unauthorized).'
-        : err.status === 0
-          ? 'Could not reach the API. Is it running?'
-          : `Could not add the quote (server responded ${err.status}).`,
-    );
+    this.formError.set(err.friendlyMessage);
     return undefined;
   }
 }

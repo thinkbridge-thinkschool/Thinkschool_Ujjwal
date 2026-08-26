@@ -1,7 +1,7 @@
 import { Component, inject, signal } from '@angular/core';
-import { HttpErrorResponse } from '@angular/common/http';
 import { ReactiveFormsModule, FormControl, FormGroup, Validators } from '@angular/forms';
 import { AuthService } from '../../services/auth';
+import { AppHttpError } from '../../http/app-http-error';
 
 type Mode = 'sign-in' | 'create-account';
 
@@ -46,18 +46,21 @@ export class LoginComponent {
         this.submitting.set(false);
         this.form.reset({ email: '', password: '' });
       },
-      error: (err: HttpErrorResponse) => {
+      error: (err: AppHttpError) => {
         this.submitting.set(false);
         this.error.set(this.describeError(err));
       },
     });
   }
 
-  private describeError(err: HttpErrorResponse): string {
-    const serverMessage = (err.error as { error?: string } | null)?.error;
-    if (serverMessage) return serverMessage;
+  // The interceptor's generic 401 message ("You need to sign in to do
+  // that.") assumes an authorization failure on a protected resource - on
+  // /api/auth/login a 401 always means bad credentials instead, and the
+  // backend sends no body to derive that from (Results.Unauthorized() is
+  // empty), so this is the one place that has to override the generic
+  // friendlyMessage rather than just display it.
+  private describeError(err: AppHttpError): string {
     if (err.status === 401) return 'Invalid email or password.';
-    if (err.status === 0) return 'Could not reach the API. Is it running?';
-    return 'Something went wrong. Please try again.';
+    return err.friendlyMessage;
   }
 }
