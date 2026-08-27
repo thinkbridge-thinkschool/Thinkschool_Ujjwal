@@ -24,6 +24,42 @@ public static class EndpointExtensions
 
         var auth = app.MapGroup("/api/auth");
 
+auth.MapPost("/register", async (RegisterRequest request, QuotesDbContext db, IJwtTokenService tokenService, IOptions<JwtOptions> jwtOptions, CancellationToken ct) =>
+{
+    if (string.IsNullOrWhiteSpace(request.Email) || string.IsNullOrWhiteSpace(request.Password))
+        return Results.BadRequest(new { error = "Email and password are required." });
+
+    if (request.Password.Length < 8)
+        return Results.BadRequest(new { error = "Password must be at least 8 characters." });
+
+    var normalizedEmail = request.Email.Trim().ToLowerInvariant();
+    var alreadyExists = await db.Users.AnyAsync(u => u.Email == normalizedEmail, ct);
+    if (alreadyExists)
+        return Results.Conflict(new { error = "An account with this email already exists." });
+
+    var user = User.Create(normalizedEmail, request.Password);
+    db.Users.Add(user);
+    // Flush first: user.Id is DB-generated and isn't populated until
+    // SaveChanges runs, but the token's sub claim (and the refresh token's
+    // FK) need the real Id, not the pre-insert default.
+    await db.SaveChangesAsync(ct);
+
+    var accessToken = tokenService.GenerateAccessToken(user);
+    var refreshTokenPlain = tokenService.GenerateRefreshToken();
+    var refreshTokenEntity = RefreshToken.Create(refreshTokenPlain, user.Id, DateTimeOffset.UtcNow.Add(jwtOptions.Value.RefreshTokenLifetime));
+    db.RefreshTokens.Add(refreshTokenEntity);
+    await db.SaveChangesAsync(ct);
+
+    var response = new LoginResponse
+    {
+        AccessToken = accessToken,
+        RefreshToken = refreshTokenPlain,
+        ExpiresIn = tokenService.AccessTokenMinutes * 60
+    };
+
+    return Results.Created("/api/auth/login", response);
+});
+
 auth.MapPost("/login", async (LoginRequest request, QuotesDbContext db, IJwtTokenService tokenService, IOptions<JwtOptions> jwtOptions, CancellationToken ct) =>
 {
     if (string.IsNullOrWhiteSpace(request.Email) || string.IsNullOrWhiteSpace(request.Password))

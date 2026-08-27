@@ -1,0 +1,239 @@
+.auth-page {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 1.1fr 1fr;
+  align-items: center;
+}
+
+.auth-hero {
+  position: relative;
+  overflow: hidden;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 1.25rem;
+  padding: 3rem 3.5rem;
+  background: linear-gradient(160deg, var(--accent-dark), var(--accent));
+  color: #fff;
+}
+
+.hero-watermark {
+  position: absolute;
+  top: -4rem;
+  right: -1rem;
+  font-size: 22rem;
+  color: #fff;
+  opacity: 0.08;
+}
+
+.auth-hero .brand {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  position: relative;
+  z-index: 1;
+}
+
+.auth-hero .brand-mark {
+  font-size: 1.6rem;
+  color: var(--gold-soft);
+}
+
+.auth-hero .brand-word {
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  font-size: 0.85rem;
+  opacity: 0.85;
+}
+
+.auth-hero h1 {
+  position: relative;
+  z-index: 1;
+  margin: 0;
+  font-family: var(--font-serif);
+  font-weight: 600;
+  font-size: clamp(1.8rem, 3.4vw, 2.6rem);
+  line-height: 1.18;
+  max-width: 22rem;
+}
+
+.hero-tagline {
+  position: relative;
+  z-index: 1;
+  margin: 0;
+  max-width: 24rem;
+  color: rgba(255, 255, 255, 0.82);
+  line-height: 1.6;
+}
+
+.auth-panel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1.5rem;
+}
+
+@media (max-width: 860px) {
+  .auth-page {
+    grid-template-columns: 1fr;
+    min-height: auto;
+  }
+
+  .auth-hero {
+    padding: 3rem 1.75rem 2.5rem;
+    text-align: center;
+    align-items: center;
+  }
+
+  .hero-watermark {
+    font-size: 14rem;
+    top: -2rem;
+    right: 50%;
+    transform: translateX(50%);
+  }
+
+  .auth-hero h1 {
+    max-width: none;
+  }
+
+  .hero-tagline {
+    max-width: none;
+  }
+}
+
+.navbar {
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.navbar-inner {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 0.75rem 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.navbar-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-shrink: 0;
+}
+
+.navbar .brand-mark.small {
+  font-size: 1.4rem;
+  color: var(--gold);
+}
+
+.navbar-brand .brand-word {
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.navbar-links {
+  display: flex;
+  gap: 0.35rem;
+  overflow-x: auto;
+  scrollbar-width: none;
+  min-width: 0;
+}
+
+.navbar-links::-webkit-scrollbar {
+  display: none;
+}
+
+.nav-link {
+  position: relative;
+  font: inherit;
+  font-weight: 600;
+  background: none;
+  border: none;
+  border-radius: 8px;
+  padding: 0.5rem 0.9rem;
+  color: var(--text-muted);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background var(--transition), color var(--transition), transform var(--transition);
+}
+
+.nav-link::after {
+  content: '';
+  position: absolute;
+  left: 0.9rem;
+  right: 0.9rem;
+  bottom: 0.15rem;
+  height: 2px;
+  background: var(--accent);
+  border-radius: 2px;
+  transform: scaleX(0);
+  transition: transform var(--transition);
+}
+
+.nav-link:hover {
+  background: var(--accent-soft);
+  color: var(--accent-dark);
+}
+
+.nav-link:active {
+  transform: scale(0.97);
+}
+
+.nav-link.active {
+  background: var(--accent-soft);
+  color: var(--accent-dark);
+}
+
+.nav-link.active::after {
+  transform: scaleX(1);
+}
+
+.nav-link:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.nav-link.logout {
+  margin-left: auto;
+  color: var(--danger);
+  flex-shrink: 0;
+}
+
+.nav-link.logout::after {
+  display: none;
+}
+
+.nav-link.logout:hover {
+  background: var(--danger-soft);
+}
+
+.page {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem 4rem;
+}
+
+.page > * {
+  animation: fade-rise 0.25s ease-out;
+}
+
+@media (max-width: 640px) {
+  .navbar-inner {
+    padding: 0.65rem 1rem;
+  }
+
+  .navbar-brand .brand-word {
+    display: none;
+  }
+
+  .page {
+    padding: 1.25rem 1rem 3rem;
+  }
+}

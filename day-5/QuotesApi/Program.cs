@@ -19,6 +19,17 @@ builder.Services.AddRandomQuoteClient(builder.Configuration);
 builder.Services.AddHealthChecks()
     .AddCheck<DatabaseHealthCheck>("database");
 
+// Dev-only: lets a locally-run Angular dev server (any localhost port) call this
+// API from the browser. Never enabled outside Development.
+if (builder.Environment.IsDevelopment())
+{
+    builder.Services.AddCors(options =>
+        options.AddPolicy("AngularDev", policy =>
+            policy.SetIsOriginAllowed(origin => Uri.TryCreate(origin, UriKind.Absolute, out var uri) && uri.IsLoopback)
+                  .AllowAnyMethod()
+                  .AllowAnyHeader()));
+}
+
 var app = builder.Build();
 
 // Correlation goes outermost so every log line - including from ExceptionMiddleware
@@ -28,6 +39,11 @@ app.UseSerilogRequestLogging();
 
 // Exception handling wraps the auth middleware.
 app.UseMiddleware<ExceptionMiddleware>();
+
+if (app.Environment.IsDevelopment())
+{
+    app.UseCors("AngularDev");
+}
 
 app.UseAuthentication();
 app.UseAuthorization();

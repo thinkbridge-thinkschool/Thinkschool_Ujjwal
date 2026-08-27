@@ -1,0 +1,69 @@
+@if (!auth.isLoggedIn()) {
+  <div class="auth-page">
+    <div class="auth-hero">
+      <span class="watermark-quote hero-watermark" aria-hidden="true">❝</span>
+      <div class="brand">
+        <span class="brand-mark">❝</span>
+        <span class="brand-word">Quotes API</span>
+      </div>
+      <h1>Every good idea<br>started as a line<br>worth remembering.</h1>
+      <p class="hero-tagline">
+        A small collection of quotes, built on a real ASP.NET Core API —
+        sign in to browse, filter, and add your own.
+      </p>
+    </div>
+    <div class="auth-panel">
+      <app-login />
+    </div>
+  </div>
+} @else {
+  <nav class="navbar">
+    <div class="navbar-inner">
+      <div class="navbar-brand">
+        <span class="brand-mark small">❝</span>
+        <span class="brand-word">Quotes API</span>
+      </div>
+      <div class="navbar-links">
+        <button
+          type="button"
+          class="nav-link"
+          [class.active]="view() === 'quotes'"
+          (click)="setView('quotes')"
+        >
+          Quotes
+        </button>
+        <button
+          type="button"
+          class="nav-link"
+          [class.active]="view() === 'create'"
+          (click)="setView('create')"
+        >
+          Create quote
+        </button>
+        <button
+          type="button"
+          class="nav-link"
+          [class.active]="view() === 'create-signal'"
+          (click)="setView('create-signal')"
+        >
+          Create quote (Signal Forms)
+        </button>
+      </div>
+      <button type="button" class="nav-link logout" (click)="auth.logout()">Log out</button>
+    </div>
+  </nav>
+
+  <main class="page">
+    @switch (view()) {
+      @case ('quotes') {
+        <app-quotes />
+      }
+      @case ('create') {
+        <app-quote-form (quoteCreated)="onQuoteCreated()" />
+      }
+      @case ('create-signal') {
+        <app-quote-form-signal (quoteCreated)="onQuoteCreated()" />
+      }
+    }
+  </main>
+}
