@@ -1,13 +1,13 @@
 import { Component, OnInit, computed, effect, inject, signal } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { QuoteService } from '../../services/quote';
 import { Quote } from '../../models/quote.model';
-import { QuoteDetailComponent } from '../quote-detail/quote-detail';
 
 type LoadState = 'loading' | 'loaded' | 'error';
 
 @Component({
   selector: 'app-quotes',
-  imports: [QuoteDetailComponent],
+  imports: [RouterLink],
   templateUrl: './quotes.html',
   styleUrl: './quotes.css',
 })
@@ -17,7 +17,6 @@ export class QuotesComponent implements OnInit {
   protected readonly loadState = signal<LoadState>('loading');
   protected readonly quotes = signal<Quote[]>([]);
   protected readonly filter = signal('');
-  protected readonly selectedId = signal<number | null>(null);
 
   // Derived from the two signals above: recomputes whenever quotes are
   // (re)loaded or the filter text changes.
@@ -54,19 +53,5 @@ export class QuotesComponent implements OnInit {
 
   onFilterInput(event: Event): void {
     this.filter.set((event.target as HTMLInputElement).value);
-  }
-
-  onSelect(id: number): void {
-    this.selectedId.set(id);
-  }
-
-  onQuoteDeleted(id: number): void {
-    // Replace with a new array reference - pushing/splicing the existing
-    // array would mutate in place and, under zoneless, not trigger a
-    // re-render.
-    this.quotes.set(this.quotes().filter((q) => q.id !== id));
-    if (this.selectedId() === id) {
-      this.selectedId.set(null);
-    }
   }
 }

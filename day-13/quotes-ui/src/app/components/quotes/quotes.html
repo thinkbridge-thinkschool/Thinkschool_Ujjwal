@@ -26,24 +26,19 @@
       } @else {
         <div class="quote-grid">
           @for (quote of filteredQuotes(); track quote.id; let i = $index) {
-            <button
-              type="button"
+            <a
               class="quote-card"
-              [class.selected]="quote.id === selectedId()"
-              [attr.aria-pressed]="quote.id === selectedId()"
+              [routerLink]="['/quotes', quote.id]"
               [style.animation-delay.ms]="i * 25 > 300 ? 300 : i * 25"
-              (click)="onSelect(quote.id)"
             >
               <span class="card-watermark watermark-quote" aria-hidden="true">❝</span>
               <span class="quote-mark" aria-hidden="true">❝</span>
               <blockquote>{{ quote.text }}</blockquote>
               <p class="author">— {{ quote.author }}</p>
-            </button>
+            </a>
           }
         </div>
       }
     }
   }
-
-  <app-quote-detail [quoteId]="selectedId()" (quoteDeleted)="onQuoteDeleted($event)" />
 </div>
