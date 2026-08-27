@@ -1,0 +1,49 @@
+<div class="quotes">
+  <header class="quotes-header">
+    <h2>Your quotes</h2>
+    <p class="quotes-subtitle">
+      {{ quotes().length }} quote{{ quotes().length === 1 ? '' : 's' }} in the collection
+    </p>
+  </header>
+
+  <input
+    class="filter-input"
+    type="text"
+    placeholder="Filter by author or text..."
+    (input)="onFilterInput($event)"
+  />
+
+  @switch (loadState()) {
+    @case ('loading') {
+      <p class="status"><span class="spinner" aria-hidden="true"></span> Loading quotes...</p>
+    }
+    @case ('error') {
+      <p class="status error">Could not load quotes. Is the API running?</p>
+    }
+    @case ('loaded') {
+      @if (filteredQuotes().length === 0) {
+        <p class="status">No quotes found.</p>
+      } @else {
+        <div class="quote-grid">
+          @for (quote of filteredQuotes(); track quote.id; let i = $index) {
+            <button
+              type="button"
+              class="quote-card"
+              [class.selected]="quote.id === selectedId()"
+              [attr.aria-pressed]="quote.id === selectedId()"
+              [style.animation-delay.ms]="i * 25 > 300 ? 300 : i * 25"
+              (click)="onSelect(quote.id)"
+            >
+              <span class="card-watermark watermark-quote" aria-hidden="true">❝</span>
+              <span class="quote-mark" aria-hidden="true">❝</span>
+              <blockquote>{{ quote.text }}</blockquote>
+              <p class="author">— {{ quote.author }}</p>
+            </button>
+          }
+        </div>
+      }
+    }
+  }
+
+  <app-quote-detail [quoteId]="selectedId()" (quoteDeleted)="onQuoteDeleted($event)" />
+</div>

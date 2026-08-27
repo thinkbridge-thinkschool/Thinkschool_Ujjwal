@@ -1,0 +1,63 @@
+<form class="quote-form" (submit)="$event.preventDefault(); onSubmit()" novalidate>
+  <div class="preview-note">
+    <p>
+      This is an experimental version of the Create Quote form, built to try
+      out a newer way of handling forms in Angular. It works the same way,
+      with two small differences:
+    </p>
+    <ul>
+      <li>Author and Text stop you from typing past their character limit as you go, instead of only telling you after you submit.</li>
+      <li>If you submit without filling them in, it won't automatically jump your cursor to the first empty field.</li>
+    </ul>
+  </div>
+
+  <fieldset>
+    <legend>Add a quote (Signal Forms preview)</legend>
+
+    <div class="field">
+      <label for="author-input-sf">Author</label>
+      <input
+        id="author-input-sf"
+        type="text"
+        [formField]="quoteForm.author"
+        [attr.aria-invalid]="showFieldError('author') ? true : null"
+        [attr.aria-describedby]="showFieldError('author') ? 'author-error-sf' : null"
+      />
+      @if (showFieldError('author')) {
+        <p id="author-error-sf" class="field-error" role="alert">{{ fieldErrorMessage('author') }}</p>
+      }
+      <p class="field-status">
+        touched: {{ quoteForm.author().touched() }} · dirty: {{ quoteForm.author().dirty() }}
+      </p>
+    </div>
+
+    <div class="field">
+      <label for="text-input-sf">Text</label>
+      <textarea
+        id="text-input-sf"
+        rows="3"
+        [formField]="quoteForm.text"
+        [attr.aria-invalid]="showFieldError('text') ? true : null"
+        [attr.aria-describedby]="showFieldError('text') ? 'text-error-sf' : null"
+      ></textarea>
+      @if (showFieldError('text')) {
+        <p id="text-error-sf" class="field-error" role="alert">{{ fieldErrorMessage('text') }}</p>
+      }
+      <p class="field-status">
+        touched: {{ quoteForm.text().touched() }} · dirty: {{ quoteForm.text().dirty() }}
+      </p>
+    </div>
+  </fieldset>
+
+  @if (formError()) {
+    <p class="form-error" role="alert">{{ formError() }}</p>
+  }
+
+  <button type="submit" [disabled]="quoteForm().submitting()">
+    @if (quoteForm().submitting()) {
+      <span class="spinner" aria-hidden="true"></span> Adding…
+    } @else {
+      Add quote
+    }
+  </button>
+</form>
