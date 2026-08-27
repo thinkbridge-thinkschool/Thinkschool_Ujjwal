@@ -2,13 +2,12 @@ import {
   Component,
   ElementRef,
   inject,
-  output,
   signal,
   viewChild,
 } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { Router } from '@angular/router';
 import { QuoteService } from '../../services/quote';
-import { Quote } from '../../models/quote.model';
 import { notBlank } from './not-blank.validator';
 import { AppHttpError } from '../../http/app-http-error';
 
@@ -22,8 +21,7 @@ type SubmitState = 'idle' | 'submitting' | 'success' | 'error';
 })
 export class QuoteFormComponent {
   private readonly quoteService = inject(QuoteService);
-
-  readonly quoteCreated = output<Quote>();
+  private readonly router = inject(Router);
 
   protected readonly state = signal<SubmitState>('idle');
   protected readonly formError = signal<string | null>(null);
@@ -90,10 +88,13 @@ export class QuoteFormComponent {
     this.formError.set(null);
 
     this.quoteService.createQuote(this.form.getRawValue()).subscribe({
-      next: (quote) => {
+      next: () => {
         this.state.set('success');
-        this.quoteCreated.emit(quote);
         this.form.reset({ author: '', text: '' });
+        // Same reasoning as the Day 15 fix: navigating immediately would
+        // unmount this component in the same tick the success state is
+        // set, before "Quote added." ever paints a frame.
+        setTimeout(() => this.router.navigate(['/quotes']), 900);
       },
       error: (err: AppHttpError) => {
         this.state.set('error');

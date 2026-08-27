@@ -1,5 +1,6 @@
-import { Component, inject, output, signal } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { FormField, form, maxLength, required, requiredError, submit, validate } from '@angular/forms/signals';
+import { Router } from '@angular/router';
 import { QuoteService } from '../../services/quote';
 import { Quote } from '../../models/quote.model';
 import { AppHttpError } from '../../http/app-http-error';
@@ -12,8 +13,7 @@ import { AppHttpError } from '../../http/app-http-error';
 })
 export class QuoteFormSignalComponent {
   private readonly quoteService = inject(QuoteService);
-
-  readonly quoteCreated = output<Quote>();
+  private readonly router = inject(Router);
 
   protected readonly model = signal({ author: '', text: '' });
 
@@ -70,11 +70,11 @@ export class QuoteFormSignalComponent {
     submit(this.quoteForm, {
       action: async (field) => {
         try {
-          const created = await new Promise<Quote>((resolve, reject) => {
+          await new Promise<Quote>((resolve, reject) => {
             this.quoteService.createQuote(field().value()).subscribe({ next: resolve, error: reject });
           });
-          this.quoteCreated.emit(created);
           this.model.set({ author: '', text: '' });
+          this.router.navigate(['/quotes']);
           return undefined;
         } catch (err) {
           return this.mapServerError(err as AppHttpError);

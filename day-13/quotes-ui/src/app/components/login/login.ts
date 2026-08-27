@@ -1,5 +1,6 @@
 import { Component, inject, signal } from '@angular/core';
 import { ReactiveFormsModule, FormControl, FormGroup, Validators } from '@angular/forms';
+import { ActivatedRoute, Router } from '@angular/router';
 import { AuthService } from '../../services/auth';
 import { AppHttpError } from '../../http/app-http-error';
 
@@ -13,6 +14,8 @@ type Mode = 'sign-in' | 'create-account';
 })
 export class LoginComponent {
   private readonly auth = inject(AuthService);
+  private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
 
   protected readonly mode = signal<Mode>('sign-in');
   protected readonly submitting = signal(false);
@@ -45,6 +48,11 @@ export class LoginComponent {
       next: () => {
         this.submitting.set(false);
         this.form.reset({ email: '', password: '' });
+        // Send the user back to whatever route the auth guard bounced them
+        // from (preserved as returnUrl), not a hardcoded default - only
+        // fall back to /quotes when they arrived at /login directly.
+        const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl') ?? '/quotes';
+        this.router.navigateByUrl(returnUrl);
       },
       error: (err: AppHttpError) => {
         this.submitting.set(false);

@@ -51,6 +51,8 @@
   position: relative;
   overflow: hidden;
   text-align: left;
+  text-decoration: none;
+  color: inherit;
   font: inherit;
   background: var(--surface);
   border: 1px solid var(--border);
@@ -68,11 +70,6 @@
   border-color: var(--accent);
   transform: translateY(-3px);
   box-shadow: var(--shadow-md);
-}
-
-.quote-card.selected {
-  border-color: var(--accent);
-  background: var(--accent-soft);
 }
 
 .quote-card:focus-visible {
@@ -124,9 +121,4 @@
 
 .status.error {
   color: var(--danger);
-}
-
-app-quote-detail {
-  display: block;
-  margin-top: 0.5rem;
 }

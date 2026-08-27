@@ -1,64 +1,69 @@
-import { Component, computed, effect, inject, input, output, signal } from '@angular/core';
+import { Component, computed, effect, inject, input, signal } from '@angular/core';
+import { Router, RouterLink } from '@angular/router';
 import { QuoteService } from '../../services/quote';
 import { AuthService } from '../../services/auth';
 import { Quote } from '../../models/quote.model';
 import { AppHttpError } from '../../http/app-http-error';
 
-type DetailState = 'idle' | 'loading' | 'loaded' | 'error';
+type DetailState = 'loading' | 'loaded' | 'error' | 'not-found';
 
 @Component({
   selector: 'app-quote-detail',
-  imports: [],
+  imports: [RouterLink],
   templateUrl: './quote-detail.html',
   styleUrl: './quote-detail.css',
 })
 export class QuoteDetailComponent {
   private readonly quoteService = inject(QuoteService);
   private readonly auth = inject(AuthService);
+  private readonly router = inject(Router);
 
-  readonly quoteId = input<number | null>(null);
-  readonly quoteDeleted = output<number>();
+  // Bound directly from the :id route param via withComponentInputBinding
+  // - route params are always strings, so the numeric conversion (and its
+  // NaN guard) happens here, not at the router boundary.
+  readonly id = input<string>();
 
-  protected readonly state = signal<DetailState>('idle');
+  protected readonly state = signal<DetailState>('loading');
   protected readonly quote = signal<Quote | null>(null);
 
   protected readonly deleting = signal(false);
   protected readonly deleteError = signal<string | null>(null);
 
-  // DELETE /api/quotes/{id} requires ownership server-side (matched against
-  // the JWT's sub claim), so only show the control when it would actually
-  // succeed - not as a security boundary, just to avoid an inevitable 403.
   protected readonly canDelete = computed(() => {
     const q = this.quote();
     const userId = this.auth.currentUserId();
     return q !== null && userId !== null && q.createdByUserId === userId;
   });
 
-  // Re-fetches whenever quoteId changes. Selecting quotes fast enough that
-  // two requests are in flight at once is a real race: whichever response
-  // arrives last would otherwise win, even if it's for a quote the user has
-  // already navigated away from. The `this.quoteId() === id` check discards
-  // any response that resolves after a newer selection has already landed.
+  // Number('abc') is NaN, and Number(undefined) is also NaN, so both the
+  // "route param is missing" and "route param isn't a number" cases land
+  // here without ever reaching the HTTP call - no request to
+  // /api/quotes/NaN. A numeric id that the backend doesn't have (a real
+  // 404) is a separate, already-handled case: the 'error' state below.
   private readonly fetchEffect = effect(() => {
-    const id = this.quoteId();
+    const raw = this.id();
     this.deleteError.set(null);
 
-    if (id === null) {
-      this.state.set('idle');
+    const numericId = Number(raw);
+    if (!Number.isFinite(numericId)) {
+      this.state.set('not-found');
       this.quote.set(null);
       return;
     }
 
     this.state.set('loading');
-    this.quoteService.getQuoteById(id).subscribe({
+    this.quoteService.getQuoteById(numericId).subscribe({
       next: (quote) => {
-        if (this.quoteId() === id) {
+        // Discard a response that resolves after the route has already
+        // moved on to a different id - the same stale-response guard as
+        // before, just keyed off the route param instead of a parent input.
+        if (this.id() === raw) {
           this.quote.set(quote);
           this.state.set('loaded');
         }
       },
       error: () => {
-        if (this.quoteId() === id) {
+        if (this.id() === raw) {
           this.state.set('error');
         }
       },
@@ -79,13 +84,10 @@ export class QuoteDetailComponent {
     this.quoteService.deleteQuote(q.id).subscribe({
       next: () => {
         this.deleting.set(false);
-        this.quoteDeleted.emit(q.id);
+        this.router.navigate(['/quotes']);
       },
       error: (err: AppHttpError) => {
         this.deleting.set(false);
-        // 403 specifically means ownership mismatch here (delete requires
-        // the JWT sub to match createdByUserId) - more precise than the
-        // interceptor's generic "don't have permission" copy.
         this.deleteError.set(
           err.status === 403 ? 'You can only delete quotes you created.' : err.friendlyMessage,
         );

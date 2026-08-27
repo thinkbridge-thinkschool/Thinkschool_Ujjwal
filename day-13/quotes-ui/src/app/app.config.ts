@@ -1,8 +1,10 @@
 import { ApplicationConfig, provideBrowserGlobalErrorListeners, provideZonelessChangeDetection } from '@angular/core';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
+import { provideRouter, withComponentInputBinding, withViewTransitions } from '@angular/router';
 import { authInterceptor } from './interceptors/auth-interceptor';
 import { errorMappingInterceptor } from './interceptors/error-mapping-interceptor';
 import { retryInterceptor } from './interceptors/retry-interceptor';
+import { routes } from './app.routes';
 
 // Order matters: the LAST interceptor in this array sits closest to the
 // backend (Angular runs requests a->b->c and responses/errors c->b->a), so
@@ -14,5 +16,10 @@ export const appConfig: ApplicationConfig = {
     provideBrowserGlobalErrorListeners(),
     provideZonelessChangeDetection(),
     provideHttpClient(withInterceptors([authInterceptor, errorMappingInterceptor, retryInterceptor])),
+    // withComponentInputBinding: route params (e.g. :id) bind directly to a
+    // matching component input, no ActivatedRoute boilerplate needed.
+    // withViewTransitions: list <-> detail navigation animates via the
+    // browser's View Transition API instead of an instant swap.
+    provideRouter(routes, withComponentInputBinding(), withViewTransitions()),
   ]
 };
