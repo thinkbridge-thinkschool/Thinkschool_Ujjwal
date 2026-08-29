@@ -1,7 +1,7 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormField, form, maxLength, required, requiredError, submit, validate } from '@angular/forms/signals';
 import { Router } from '@angular/router';
-import { QuoteService } from '../../services/quote';
+import { QuotesStore } from '../../store/quotes-store';
 import { Quote } from '../../models/quote.model';
 import { AppHttpError } from '../../http/app-http-error';
 
@@ -12,7 +12,7 @@ import { AppHttpError } from '../../http/app-http-error';
   styleUrl: './quote-form-signal.css',
 })
 export class QuoteFormSignalComponent {
-  private readonly quoteService = inject(QuoteService);
+  private readonly store = inject(QuotesStore);
   private readonly router = inject(Router);
 
   protected readonly model = signal({ author: '', text: '' });
@@ -71,7 +71,7 @@ export class QuoteFormSignalComponent {
       action: async (field) => {
         try {
           await new Promise<Quote>((resolve, reject) => {
-            this.quoteService.createQuote(field().value()).subscribe({ next: resolve, error: reject });
+            this.store.create(field().value()).subscribe({ next: resolve, error: reject });
           });
           this.model.set({ author: '', text: '' });
           this.router.navigate(['/quotes']);

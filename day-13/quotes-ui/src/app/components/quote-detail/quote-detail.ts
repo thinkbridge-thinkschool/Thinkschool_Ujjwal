@@ -1,8 +1,7 @@
 import { Component, computed, effect, inject, input, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
-import { QuoteService } from '../../services/quote';
+import { QuotesStore } from '../../store/quotes-store';
 import { AuthService } from '../../services/auth';
-import { Quote } from '../../models/quote.model';
 import { AppHttpError } from '../../http/app-http-error';
 
 type DetailState = 'loading' | 'loaded' | 'error' | 'not-found';
@@ -14,7 +13,7 @@ type DetailState = 'loading' | 'loaded' | 'error' | 'not-found';
   styleUrl: './quote-detail.css',
 })
 export class QuoteDetailComponent {
-  private readonly quoteService = inject(QuoteService);
+  private readonly store = inject(QuotesStore);
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
 
@@ -24,10 +23,23 @@ export class QuoteDetailComponent {
   readonly id = input<string>();
 
   protected readonly state = signal<DetailState>('loading');
-  protected readonly quote = signal<Quote | null>(null);
 
   protected readonly deleting = signal(false);
   protected readonly deleteError = signal<string | null>(null);
+
+  // Derived from the store's cache rather than held as its own copy - if
+  // the cached quote is ever updated elsewhere, this reflects it
+  // automatically. Only the fetch's own lifecycle (loading/error/not-found)
+  // stays local, since that's specific to this screen's request, not
+  // shared data.
+  protected readonly quote = computed(() => {
+    const raw = this.id();
+    const numericId = Number(raw);
+    if (!Number.isFinite(numericId)) {
+      return null;
+    }
+    return this.store.getById(numericId) ?? null;
+  });
 
   protected readonly canDelete = computed(() => {
     const q = this.quote();
@@ -38,8 +50,8 @@ export class QuoteDetailComponent {
   // Number('abc') is NaN, and Number(undefined) is also NaN, so both the
   // "route param is missing" and "route param isn't a number" cases land
   // here without ever reaching the HTTP call - no request to
-  // /api/quotes/NaN. A numeric id that the backend doesn't have (a real
-  // 404) is a separate, already-handled case: the 'error' state below.
+  // /api/quotes/NaN. A numeric id that the backend doesn't have is a
+  // separate, already-handled case: the 'error' state below.
   private readonly fetchEffect = effect(() => {
     const raw = this.id();
     this.deleteError.set(null);
@@ -47,18 +59,24 @@ export class QuoteDetailComponent {
     const numericId = Number(raw);
     if (!Number.isFinite(numericId)) {
       this.state.set('not-found');
-      this.quote.set(null);
+      return;
+    }
+
+    // Already cached (arrived here from the list, or a prior visit) - no
+    // network call at all.
+    if (this.store.getById(numericId)) {
+      this.state.set('loaded');
       return;
     }
 
     this.state.set('loading');
-    this.quoteService.getQuoteById(numericId).subscribe({
-      next: (quote) => {
+    this.store.loadOne(numericId).subscribe({
+      next: () => {
         // Discard a response that resolves after the route has already
         // moved on to a different id - the same stale-response guard as
-        // before, just keyed off the route param instead of a parent input.
+        // before routing and the store existed, just keyed off the route
+        // param instead of a parent input.
         if (this.id() === raw) {
-          this.quote.set(quote);
           this.state.set('loaded');
         }
       },
@@ -81,7 +99,7 @@ export class QuoteDetailComponent {
     this.deleting.set(true);
     this.deleteError.set(null);
 
-    this.quoteService.deleteQuote(q.id).subscribe({
+    this.store.remove(q.id).subscribe({
       next: () => {
         this.deleting.set(false);
         this.router.navigate(['/quotes']);
