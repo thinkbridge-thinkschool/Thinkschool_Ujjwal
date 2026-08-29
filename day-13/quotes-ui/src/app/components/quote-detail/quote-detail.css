@@ -66,6 +66,19 @@
   color: var(--danger);
 }
 
+.back-link {
+  display: inline-block;
+  margin-top: 0.5rem;
+  color: var(--accent);
+  font-weight: 600;
+  text-decoration: underline;
+}
+
+.back-link:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
 .delete-btn {
   position: relative;
   z-index: 1;

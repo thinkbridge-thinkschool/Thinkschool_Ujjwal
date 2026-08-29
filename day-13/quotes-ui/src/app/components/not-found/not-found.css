@@ -1,0 +1,67 @@
+.not-found {
+  position: relative;
+  overflow: hidden;
+  text-align: center;
+  padding: 3rem 1.75rem;
+  border: 1px solid var(--border);
+  border-top: 3px solid var(--gold);
+  border-radius: var(--radius);
+  background: var(--surface);
+  animation: fade-rise 0.25s ease-out;
+}
+
+.not-found .card-watermark {
+  position: absolute;
+  top: -1.5rem;
+  right: -0.5rem;
+  font-size: 7rem;
+}
+
+.eyebrow {
+  position: relative;
+  z-index: 1;
+  margin: 0 0 0.4rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--gold);
+}
+
+.not-found h2 {
+  position: relative;
+  z-index: 1;
+  margin: 0 0 0.5rem;
+  font-family: var(--font-serif);
+  font-weight: 600;
+  font-size: 1.6rem;
+}
+
+.message {
+  position: relative;
+  z-index: 1;
+  margin: 0 0 1.5rem;
+  color: var(--text-muted);
+}
+
+.home-link {
+  position: relative;
+  z-index: 1;
+  display: inline-block;
+  padding: 0.6rem 1.2rem;
+  border-radius: 8px;
+  background: var(--accent);
+  color: #fff;
+  font-weight: 600;
+  text-decoration: none;
+  transition: transform var(--transition), box-shadow var(--transition);
+}
+
+.home-link:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.home-link:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
