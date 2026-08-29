@@ -3,32 +3,60 @@ name: CI
 on:
   push:
   pull_request:
+    branches: [main]
 
 jobs:
   test:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
 
     steps:
       - uses: actions/checkout@v4
 
       - uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: "10.0.x"
+          dotnet-version: '10.0.x'
 
-      - name: Restore unit tests
-        run: dotnet restore day-3/Quotes.Tests.Unit/Quotes.Tests.Unit.csproj
+      - name: Restore
+        run: |
+          dotnet restore day-4/Quotes.Tests.Unit/Quotes.Tests.Unit.csproj
+          dotnet restore day-4/Quotes.Tests.Integration/Quotes.Tests.Integration.csproj
 
-      - name: Build unit tests
-        run: dotnet build day-3/Quotes.Tests.Unit/Quotes.Tests.Unit.csproj --no-restore
+      - name: Build
+        run: |
+          dotnet build day-4/Quotes.Tests.Unit/Quotes.Tests.Unit.csproj --no-restore
+          dotnet build day-4/Quotes.Tests.Integration/Quotes.Tests.Integration.csproj --no-restore
 
-      - name: Run unit tests
-        run: dotnet test day-3/Quotes.Tests.Unit/Quotes.Tests.Unit.csproj --no-build
+      - name: Test
+        run: |
+          dotnet test day-4/Quotes.Tests.Unit/Quotes.Tests.Unit.csproj --no-build \
+            --logger "trx;LogFileName=unit-results.trx" \
+            --collect:"XPlat Code Coverage" \
+            --results-directory ./TestResults
+          dotnet test day-4/Quotes.Tests.Integration/Quotes.Tests.Integration.csproj --no-build \
+            --logger "trx;LogFileName=integration-results.trx" \
+            --collect:"XPlat Code Coverage" \
+            --results-directory ./TestResults
 
-      - name: Restore integration tests
-        run: dotnet restore day-3/Quotes.Tests.Integration/Quotes.Tests.Integration.csproj
+      - name: Merge coverage
+        uses: danielpalme/ReportGenerator-GitHub-Action@v5
+        with:
+          reports: 'TestResults/**/coverage.cobertura.xml'
+          targetdir: 'CoverageReport'
+          reporttypes: 'Html;TextSummary'
+          classfilters: '-QuotesApi.Migrations.*'
 
-      - name: Build integration tests
-        run: dotnet build day-3/Quotes.Tests.Integration/Quotes.Tests.Integration.csproj --no-restore
+      - name: Enforce 80% line coverage
+        run: |
+          LINE=$(grep 'Line coverage:' CoverageReport/Summary.txt | tr -dc '0-9.')
+          echo "Line coverage: ${LINE}%"
+          awk -v c="$LINE" 'BEGIN { exit (c < 80) }'
 
-      - name: Run integration tests
-        run: dotnet test day-3/Quotes.Tests.Integration/Quotes.Tests.Integration.csproj --no-build
+      - name: Upload results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-and-coverage
+          path: |
+            TestResults/**/*.trx
+            CoverageReport/
