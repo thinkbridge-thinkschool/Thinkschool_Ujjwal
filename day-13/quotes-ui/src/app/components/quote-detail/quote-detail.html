@@ -1,13 +1,15 @@
 <div class="quote-detail">
   @switch (state()) {
-    @case ('idle') {
-      <p class="status">Select a quote to see its details.</p>
-    }
     @case ('loading') {
       <p class="status"><span class="spinner" aria-hidden="true"></span> Loading...</p>
     }
+    @case ('not-found') {
+      <p class="status error" role="alert">That's not a valid quote link.</p>
+      <a routerLink="/quotes" class="back-link">Back to your quotes</a>
+    }
     @case ('error') {
       <p class="status error">Could not load that quote.</p>
+      <a routerLink="/quotes" class="back-link">Back to your quotes</a>
     }
     @case ('loaded') {
       @if (quote(); as q) {
@@ -16,6 +18,7 @@
         <blockquote>{{ q.text }}</blockquote>
         <p class="author">— {{ q.author }}</p>
         <p class="meta">Quote #{{ q.id }}</p>
+        <p class="meta">Created by {{ q.createdBy || 'Unknown' }}</p>
 
         @if (canDelete()) {
           @if (deleteError()) {

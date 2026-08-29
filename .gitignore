@@ -5,3 +5,6 @@ obj/
 # Node
 node_modules/
 QuotesApi/quotes.db
+*.db
+*.db-shm
+*.db-wal

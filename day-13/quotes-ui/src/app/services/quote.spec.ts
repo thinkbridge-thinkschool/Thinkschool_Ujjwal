@@ -34,9 +34,9 @@ describe('QuoteService - characterizes the real Week-1 API contract', () => {
         id: 6,
         author: 'Maya Angelou',
         text: "I've learned that people will forget what you said...",
-        createdByUserId: '1',
+        createdByUserId: '1', createdBy: null,
       },
-      { id: 2, author: 'Steve Jobs', text: 'The only way to do great work is to love what you do.', createdByUserId: null },
+      { id: 2, author: 'Steve Jobs', text: 'The only way to do great work is to love what you do.', createdByUserId: null, createdBy: null },
     ];
 
     let actual: Quote[] | undefined;
@@ -62,7 +62,7 @@ describe('QuoteService - characterizes the real Week-1 API contract', () => {
   });
 
   it('GET /api/quotes/{id} hits the real per-id route and returns a single Quote', () => {
-    const mockQuote: Quote = { id: 25, author: 'Mark Twain', text: '...', createdByUserId: '1' };
+    const mockQuote: Quote = { id: 25, author: 'Mark Twain', text: '...', createdByUserId: '1', createdBy: null };
 
     let actual: Quote | undefined;
     service.getQuoteById(25).subscribe((quote) => (actual = quote));
@@ -83,7 +83,7 @@ describe('QuoteService - characterizes the real Week-1 API contract', () => {
     expect(req.request.body.id).toBeUndefined();
     expect(req.request.body.createdByUserId).toBeUndefined();
 
-    req.flush({ id: 40, author: 'Ada Lovelace', text: 'Real quote text.', createdByUserId: '4' });
+    req.flush({ id: 40, author: 'Ada Lovelace', text: 'Real quote text.', createdByUserId: '4', createdBy: null });
   });
 
   it('a 400 from POST /api/quotes surfaces the real ValidationProblemDetails shape untouched', () => {
