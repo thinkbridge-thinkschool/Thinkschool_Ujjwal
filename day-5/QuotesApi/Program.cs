@@ -29,6 +29,25 @@ if (builder.Environment.IsDevelopment())
                   .AllowAnyMethod()
                   .AllowAnyHeader()));
 }
+else
+{
+    // The deployed Angular app lives on a different origin (Azure Static
+    // Web Apps), so browser calls here are cross-origin. Cors:AllowedOrigin
+    // is an App Service Application Setting, not source - it's not a
+    // secret, but keeping it out of the repo means the API doesn't need a
+    // redeploy if the frontend's URL ever changes. No policy is registered
+    // at all if it's unset, so an unconfigured deployment fails closed
+    // (no CORS headers) rather than silently allowing every origin.
+    var allowedOrigin = builder.Configuration["Cors:AllowedOrigin"];
+    if (!string.IsNullOrWhiteSpace(allowedOrigin))
+    {
+        builder.Services.AddCors(options =>
+            options.AddPolicy("Swa", policy =>
+                policy.WithOrigins(allowedOrigin)
+                      .AllowAnyMethod()
+                      .AllowAnyHeader()));
+    }
+}
 
 var app = builder.Build();
 
@@ -43,6 +62,10 @@ app.UseMiddleware<ExceptionMiddleware>();
 if (app.Environment.IsDevelopment())
 {
     app.UseCors("AngularDev");
+}
+else if (!string.IsNullOrWhiteSpace(app.Configuration["Cors:AllowedOrigin"]))
+{
+    app.UseCors("Swa");
 }
 
 app.UseAuthentication();
