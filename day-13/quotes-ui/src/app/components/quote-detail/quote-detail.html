@@ -18,6 +18,7 @@
         <blockquote>{{ q.text }}</blockquote>
         <p class="author">— {{ q.author }}</p>
         <p class="meta">Quote #{{ q.id }}</p>
+        <p class="meta">Created by {{ q.createdBy || 'Unknown' }}</p>
 
         @if (canDelete()) {
           @if (deleteError()) {

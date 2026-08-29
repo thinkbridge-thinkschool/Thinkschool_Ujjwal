@@ -7,7 +7,7 @@ import {
 } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
-import { QuoteService } from '../../services/quote';
+import { QuotesStore } from '../../store/quotes-store';
 import { notBlank } from './not-blank.validator';
 import { AppHttpError } from '../../http/app-http-error';
 
@@ -20,7 +20,7 @@ type SubmitState = 'idle' | 'submitting' | 'success' | 'error';
   styleUrl: './quote-form.css',
 })
 export class QuoteFormComponent {
-  private readonly quoteService = inject(QuoteService);
+  private readonly store = inject(QuotesStore);
   private readonly router = inject(Router);
 
   protected readonly state = signal<SubmitState>('idle');
@@ -87,7 +87,7 @@ export class QuoteFormComponent {
     this.state.set('submitting');
     this.formError.set(null);
 
-    this.quoteService.createQuote(this.form.getRawValue()).subscribe({
+    this.store.create(this.form.getRawValue()).subscribe({
       next: () => {
         this.state.set('success');
         this.form.reset({ author: '', text: '' });

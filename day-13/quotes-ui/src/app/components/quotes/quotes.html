@@ -2,7 +2,7 @@
   <header class="quotes-header">
     <h2>Your quotes</h2>
     <p class="quotes-subtitle">
-      {{ quotes().length }} quote{{ quotes().length === 1 ? '' : 's' }} in the collection
+      {{ store.quotes().length }} quote{{ store.quotes().length === 1 ? '' : 's' }} in the collection
     </p>
   </header>
 
@@ -13,19 +13,22 @@
     (input)="onFilterInput($event)"
   />
 
-  @switch (loadState()) {
+  @switch (store.status()) {
+    @case ('idle') {
+      <p class="status"><span class="spinner" aria-hidden="true"></span> Loading quotes...</p>
+    }
     @case ('loading') {
       <p class="status"><span class="spinner" aria-hidden="true"></span> Loading quotes...</p>
     }
     @case ('error') {
-      <p class="status error">Could not load quotes. Is the API running?</p>
+      <p class="status error" role="alert">{{ store.error()?.friendlyMessage }}</p>
     }
     @case ('loaded') {
-      @if (filteredQuotes().length === 0) {
+      @if (store.filteredQuotes().length === 0) {
         <p class="status">No quotes found.</p>
       } @else {
         <div class="quote-grid">
-          @for (quote of filteredQuotes(); track quote.id; let i = $index) {
+          @for (quote of store.filteredQuotes(); track quote.id; let i = $index) {
             <a
               class="quote-card"
               [routerLink]="['/quotes', quote.id]"
@@ -35,6 +38,7 @@
               <span class="quote-mark" aria-hidden="true">❝</span>
               <blockquote>{{ quote.text }}</blockquote>
               <p class="author">— {{ quote.author }}</p>
+              <p class="creator">Added by {{ quote.createdBy || 'Unknown' }}</p>
             </a>
           }
         </div>

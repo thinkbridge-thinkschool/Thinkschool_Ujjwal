@@ -60,7 +60,7 @@ auth.MapPost("/register", async (RegisterRequest request, QuotesDbContext db, IJ
     return Results.Created("/api/auth/login", response);
 });
 
-auth.MapPost("/login", async (LoginRequest request, QuotesDbContext db, IJwtTokenService tokenService, IOptions<JwtOptions> jwtOptions, CancellationToken ct) =>
+auth.MapPost("api/login", async (LoginRequest request, QuotesDbContext db, IJwtTokenService tokenService, IOptions<JwtOptions> jwtOptions, CancellationToken ct) =>
 {
     if (string.IsNullOrWhiteSpace(request.Email) || string.IsNullOrWhiteSpace(request.Password))
         return Results.BadRequest(new { error = "Email and password are required." });
@@ -187,7 +187,14 @@ auth.MapPost("/refresh", async (RefreshRequest request, QuotesDbContext db, IJwt
                 return Results.ValidationProblem(errors);
 
             var callerId = user.FindFirst("oid")?.Value ?? user.FindFirst("sub")?.Value;
-            var quote = new Quote { Author = request.Author, Text = request.Text, CreatedByUserId = callerId };
+            var callerDisplayName = user.FindFirst("email")?.Value ?? user.FindFirst("preferred_username")?.Value;
+            var quote = new Quote
+            {
+                Author = request.Author,
+                Text = request.Text,
+                CreatedByUserId = callerId,
+                CreatedBy = callerDisplayName,
+            };
             var created = await repo.AddAsync(quote, ct);
             return Results.Created($"/api/quotes/{created.Id}", created);
         }).RequireAuthorization("can-edit-quotes");

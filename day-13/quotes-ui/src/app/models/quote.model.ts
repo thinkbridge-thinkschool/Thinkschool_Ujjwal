@@ -3,6 +3,7 @@ export interface Quote {
   author: string;
   text: string;
   createdByUserId: string | null;
+  createdBy: string | null;
 }
 
 // Matches QuotesApi.Models.CreateQuoteRequest exactly: id and
