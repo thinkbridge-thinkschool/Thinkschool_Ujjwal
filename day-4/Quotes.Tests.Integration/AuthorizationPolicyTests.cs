@@ -55,7 +55,14 @@ public class PolicyTestFactory : WebApplicationFactory<Program>
             ["Jwt__RefreshTokenLifetime"] = "7.00:00:00",
             ["Entra__TenantId"] = "00000000-0000-0000-0000-000000000000",
             ["Entra__Audience"] = "00000000-0000-0000-0000-000000000001",
-            ["ConnectionStrings__Default"] = $"Data Source={_dbPath}"
+            ["ConnectionStrings__Default"] = $"Data Source={_dbPath}",
+            // Blanked deliberately: this factory doesn't force Production, so
+            // Development loads user-secrets - if a developer machine has a real
+            // ApplicationInsights connection string configured there (for actually
+            // running the app locally), it would otherwise leak into every test host
+            // and try to configure the Azure Monitor exporter, violating the
+            // no-network-calls-from-tests requirement.
+            ["ApplicationInsights__ConnectionString"] = ""
         };
 
         if (additionalOverrides is not null)
