@@ -1,8 +1,9 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { toAppHttpError } from './app-http-error';
+import { environment } from '../../environments/environment';
 
 function httpError(status: number, body: unknown, statusText = ''): HttpErrorResponse {
-  return new HttpErrorResponse({ status, statusText, error: body, url: 'http://localhost:5296/api/quotes' });
+  return new HttpErrorResponse({ status, statusText, error: body, url: `${environment.apiOrigin}/api/quotes` });
 }
 
 // toAppHttpError is the piece errorMappingInterceptor delegates to. Pinned

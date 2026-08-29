@@ -3,6 +3,9 @@ import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { QuoteService } from './quote';
 import { Quote } from '../models/quote.model';
+import { environment } from '../../environments/environment';
+
+const QUOTES_URL = `${environment.apiOrigin}/api/quotes`;
 
 // Characterization test: pins the REAL Week-1 QuotesApi contract as
 // QuoteService actually consumes it today, before any interceptor exists.
@@ -43,7 +46,7 @@ describe('QuoteService - characterizes the real Week-1 API contract', () => {
     service.getQuotes().subscribe((quotes) => (actual = quotes));
 
     const req = httpMock.expectOne(
-      (r) => r.url === 'http://localhost:5296/api/quotes' && r.params.get('page') === '1' && r.params.get('size') === '100',
+      (r) => r.url === QUOTES_URL && r.params.get('page') === '1' && r.params.get('size') === '100',
     );
     expect(req.request.method).toBe('GET');
     req.flush(mockResponse);
@@ -67,7 +70,7 @@ describe('QuoteService - characterizes the real Week-1 API contract', () => {
     let actual: Quote | undefined;
     service.getQuoteById(25).subscribe((quote) => (actual = quote));
 
-    const req = httpMock.expectOne('http://localhost:5296/api/quotes/25');
+    const req = httpMock.expectOne(`${QUOTES_URL}/25`);
     expect(req.request.method).toBe('GET');
     req.flush(mockQuote);
 
@@ -77,7 +80,7 @@ describe('QuoteService - characterizes the real Week-1 API contract', () => {
   it('POST /api/quotes never sends server-owned fields (id, createdByUserId)', () => {
     service.createQuote({ author: 'Ada Lovelace', text: 'Real quote text.' }).subscribe();
 
-    const req = httpMock.expectOne('http://localhost:5296/api/quotes');
+    const req = httpMock.expectOne(QUOTES_URL);
     expect(req.request.method).toBe('POST');
     expect(req.request.body).toEqual({ author: 'Ada Lovelace', text: 'Real quote text.' });
     expect(req.request.body.id).toBeUndefined();
@@ -101,7 +104,7 @@ describe('QuoteService - characterizes the real Week-1 API contract', () => {
       error: (err: HttpErrorResponse) => (caught = err),
     });
 
-    const req = httpMock.expectOne('http://localhost:5296/api/quotes');
+    const req = httpMock.expectOne(QUOTES_URL);
     req.flush(problemDetails, { status: 400, statusText: 'Bad Request' });
 
     expect(caught?.status).toBe(400);
@@ -112,7 +115,7 @@ describe('QuoteService - characterizes the real Week-1 API contract', () => {
   it('DELETE /api/quotes/{id} hits the real route with no body', () => {
     service.deleteQuote(38).subscribe();
 
-    const req = httpMock.expectOne('http://localhost:5296/api/quotes/38');
+    const req = httpMock.expectOne(`${QUOTES_URL}/38`);
     expect(req.request.method).toBe('DELETE');
     req.flush(null, { status: 204, statusText: 'No Content' });
   });
