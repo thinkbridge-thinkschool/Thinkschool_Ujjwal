@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using QuotesApi.BackgroundJobs;
 using QuotesApi.Clients;
 using QuotesApi.Configuration;
 using QuotesApi.Data;
@@ -175,7 +176,7 @@ auth.MapPost("/refresh", async (RefreshRequest request, QuotesDbContext db, IJwt
             }
         }).AllowAnonymous();
 
-        group.MapPost("", async (CreateQuoteRequest request, ClaimsPrincipal user, IQuoteRepository repo, CancellationToken ct) =>
+        group.MapPost("", async (CreateQuoteRequest request, ClaimsPrincipal user, IQuoteRepository repo, IBackgroundTaskQueue taskQueue, ILogger<Program> logger, CancellationToken ct) =>
         {
             var errors = new Dictionary<string, string[]>();
             if (string.IsNullOrWhiteSpace(request.Author))
@@ -196,6 +197,36 @@ auth.MapPost("/refresh", async (RefreshRequest request, QuotesDbContext db, IJwt
                 CreatedBy = callerDisplayName,
             };
             var created = await repo.AddAsync(quote, ct);
+
+            // Fire-and-forget: AuditLogWorker (BackgroundJobs/) writes this
+            // row after this response has already gone out - the request
+            // never awaits it. A full queue must never turn a successful
+            // quote creation into a client-visible failure, so a rejected
+            // enqueue is only ever logged here, not surfaced as an error.
+            // See day-18/README.md for the full design.
+            var quoteId = created.Id;
+            var enqueued = taskQueue.TryEnqueue(async (sp, workCt) =>
+            {
+                var db = sp.GetRequiredService<QuotesDbContext>();
+                var clock = sp.GetRequiredService<IClock>();
+                var jobLogger = sp.GetRequiredService<ILogger<AuditLogWorker>>();
+
+                jobLogger.LogInformation("Audit write starting for quote {QuoteId}.", quoteId);
+                db.AuditLogs.Add(new AuditLog
+                {
+                    QuoteId = quoteId,
+                    CreatedByUserId = callerId,
+                    CreatedAt = clock.UtcNow,
+                });
+                await db.SaveChangesAsync(workCt);
+                jobLogger.LogInformation("Audit write finished for quote {QuoteId}.", quoteId);
+            });
+
+            if (!enqueued)
+            {
+                logger.LogWarning("Audit queue full - dropped audit entry for quote {QuoteId}.", quoteId);
+            }
+
             return Results.Created($"/api/quotes/{created.Id}", created);
         }).RequireAuthorization("can-edit-quotes");
 
