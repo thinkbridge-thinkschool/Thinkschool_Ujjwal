@@ -1,6 +1,9 @@
+using Azure.Messaging.ServiceBus;
 using Microsoft.EntityFrameworkCore;
-using QuotesApi.BackgroundJobs;
+using Microsoft.Extensions.Options;
+using QuotesApi.Configuration;
 using QuotesApi.Data;
+using QuotesApi.Messaging;
 using QuotesApi.Repositories;
 using QuotesApi.Services;
 
@@ -18,14 +21,28 @@ public static class InfrastructureExtensions
         services.AddSingleton<IClock, SystemClock>();
         services.AddSingleton<IJwtTokenService, JwtTokenService>();
 
-        // Capacity is configurable (BackgroundQueue:Capacity) but defaults
-        // to 100 - generous headroom for this app's actual load (a demo
-        // API on an F1 instance) without letting a runaway burst grow
-        // memory without bound. See day-18/README.md for the full
-        // reasoning behind the number and the bounded-channel choice.
-        var queueCapacity = config.GetValue<int?>("BackgroundQueue:Capacity") ?? 100;
-        services.AddSingleton<IBackgroundTaskQueue>(new ChannelBackgroundTaskQueue(queueCapacity));
-        services.AddHostedService<AuditLogWorker>();
+        // Day 19: Service Bus replaces Day 18's in-memory Channel<T>
+        // queue - see day-19/README.md for why. ConnectionString comes
+        // from user-secrets/environment only, never appsettings.json;
+        // this repo is public.
+        services.AddOptions<ServiceBusOptions>()
+            .Bind(config.GetSection(ServiceBusOptions.SectionName))
+            .ValidateDataAnnotations()
+            .ValidateOnStart();
+
+        // ServiceBusClient (and senders created from it) are meant to be
+        // long-lived and reused, not created per request - a singleton.
+        services.AddSingleton(sp =>
+        {
+            var options = sp.GetRequiredService<IOptions<ServiceBusOptions>>().Value;
+            return new ServiceBusClient(options.ConnectionString);
+        });
+        services.AddSingleton<QuoteCreatedPublisher>();
+
+        // Competing consumers: both subscriptions on the same topic,
+        // each with its own ServiceBusProcessor pump.
+        services.AddHostedService<AuditSubscriptionWorker>();
+        services.AddHostedService<StatsSubscriptionWorker>();
 
         return services;
     }
