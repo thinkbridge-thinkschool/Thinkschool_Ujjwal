@@ -13,10 +13,22 @@ public class QuotesDbContext : DbContext
     public DbSet<User> Users => Set<User>();
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
+    public DbSet<ProcessedMessage> ProcessedMessages => Set<ProcessedMessage>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+
+        // The dedupe key: a subscription can only ever record ONE
+        // ProcessedMessages row for a given MessageId. This is the
+        // backstop for a genuine race between two competing consumers
+        // landing on the same message at once - the plain read in
+        // AuditSubscriptionWorker.HandleMessageAsync narrows the window,
+        // this constraint closes it.
+        modelBuilder.Entity<ProcessedMessage>(entity =>
+        {
+            entity.HasIndex(p => new { p.SubscriptionName, p.MessageId }).IsUnique();
+        });
 
         modelBuilder.Entity<Collection>(entity =>
         {

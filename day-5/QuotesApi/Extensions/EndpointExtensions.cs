@@ -1,5 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
-using QuotesApi.BackgroundJobs;
+using QuotesApi.Messaging;
 using QuotesApi.Clients;
 using QuotesApi.Configuration;
 using QuotesApi.Data;
@@ -176,7 +176,7 @@ auth.MapPost("/refresh", async (RefreshRequest request, QuotesDbContext db, IJwt
             }
         }).AllowAnonymous();
 
-        group.MapPost("", async (CreateQuoteRequest request, ClaimsPrincipal user, IQuoteRepository repo, IBackgroundTaskQueue taskQueue, ILogger<Program> logger, CancellationToken ct) =>
+        group.MapPost("", async (CreateQuoteRequest request, ClaimsPrincipal user, IQuoteRepository repo, QuoteCreatedPublisher publisher, ILogger<Program> logger, CancellationToken ct) =>
         {
             var errors = new Dictionary<string, string[]>();
             if (string.IsNullOrWhiteSpace(request.Author))
@@ -198,33 +198,30 @@ auth.MapPost("/refresh", async (RefreshRequest request, QuotesDbContext db, IJwt
             };
             var created = await repo.AddAsync(quote, ct);
 
-            // Fire-and-forget: AuditLogWorker (BackgroundJobs/) writes this
-            // row after this response has already gone out - the request
-            // never awaits it. A full queue must never turn a successful
-            // quote creation into a client-visible failure, so a rejected
-            // enqueue is only ever logged here, not surfaced as an error.
-            // See day-18/README.md for the full design.
-            var quoteId = created.Id;
-            var enqueued = taskQueue.TryEnqueue(async (sp, workCt) =>
+            // Day 19: publishes to Service Bus instead of Day 18's
+            // in-memory queue - AuditSubscriptionWorker and
+            // StatsSubscriptionWorker (Messaging/) each get their own
+            // independent copy via the topic's two subscriptions. The
+            // publish itself is awaited (the durable hand-off to the
+            // broker); what's NOT awaited is either subscription actually
+            // processing it - that happens later, out of this request
+            // entirely. See day-19/README.md.
+            try
             {
-                var db = sp.GetRequiredService<QuotesDbContext>();
-                var clock = sp.GetRequiredService<IClock>();
-                var jobLogger = sp.GetRequiredService<ILogger<AuditLogWorker>>();
-
-                jobLogger.LogInformation("Audit write starting for quote {QuoteId}.", quoteId);
-                db.AuditLogs.Add(new AuditLog
+                await publisher.PublishAsync(new QuoteCreatedMessage
                 {
-                    QuoteId = quoteId,
+                    QuoteId = created.Id,
                     CreatedByUserId = callerId,
-                    CreatedAt = clock.UtcNow,
-                });
-                await db.SaveChangesAsync(workCt);
-                jobLogger.LogInformation("Audit write finished for quote {QuoteId}.", quoteId);
-            });
-
-            if (!enqueued)
+                    CreatedAtUtc = DateTimeOffset.UtcNow,
+                }, ct);
+            }
+            catch (Exception ex)
             {
-                logger.LogWarning("Audit queue full - dropped audit entry for quote {QuoteId}.", quoteId);
+                // A publish failure must not turn a successful quote
+                // creation into a client-visible failure - same principle
+                // as Day 18's full-queue handling, just a different
+                // failure mode (broker unreachable, not a bounded queue).
+                logger.LogError(ex, "Failed to publish QuoteCreated for quote {QuoteId}.", created.Id);
             }
 
             return Results.Created($"/api/quotes/{created.Id}", created);
