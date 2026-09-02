@@ -8,7 +8,7 @@ namespace QuotesApi.Messaging;
 // Thin wrapper around a single long-lived ServiceBusSender - the SDK
 // expects senders (and the client they come from) to be created once and
 // reused, not created per request.
-public class QuoteCreatedPublisher : IAsyncDisposable
+public class QuoteCreatedPublisher : IQuoteEventPublisher, IAsyncDisposable
 {
     private readonly ServiceBusSender _sender;
 

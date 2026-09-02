@@ -13,6 +13,7 @@ using QuotesApi.Authorization;
 using Polly.CircuitBreaker;
 using Polly.Timeout;
 using System.Security.Claims;
+using System.Text.Json;
 
 
 namespace QuotesApi.Extensions;
@@ -176,7 +177,7 @@ auth.MapPost("/refresh", async (RefreshRequest request, QuotesDbContext db, IJwt
             }
         }).AllowAnonymous();
 
-        group.MapPost("", async (CreateQuoteRequest request, ClaimsPrincipal user, IQuoteRepository repo, QuoteCreatedPublisher publisher, ILogger<Program> logger, CancellationToken ct) =>
+        group.MapPost("", async (CreateQuoteRequest request, ClaimsPrincipal user, IQuoteRepository repo, QuotesDbContext db, CancellationToken ct) =>
         {
             var errors = new Dictionary<string, string[]>();
             if (string.IsNullOrWhiteSpace(request.Author))
@@ -196,33 +197,42 @@ auth.MapPost("/refresh", async (RefreshRequest request, QuotesDbContext db, IJwt
                 CreatedByUserId = callerId,
                 CreatedBy = callerDisplayName,
             };
+
+            // Day 20 (transactional outbox): the Quote row and the
+            // OutboxMessage row describing its QuoteCreated event are
+            // written in ONE transaction - both commit or neither does.
+            // `db` here is the SAME scoped DbContext instance `repo`
+            // uses internally (both resolve from this request's DI
+            // scope), so repo.AddAsync's own internal SaveChangesAsync
+            // participates in this transaction too, not a separate one.
+            // Day 19's inline publish call is gone entirely - nothing in
+            // this handler talks to Service Bus anymore; OutboxRelay
+            // (Messaging/) is what actually publishes, on its own poll
+            // loop, asynchronously from this request. See
+            // day-20/README.md.
+            await using var tx = await db.Database.BeginTransactionAsync(ct);
+
             var created = await repo.AddAsync(quote, ct);
 
-            // Day 19: publishes to Service Bus instead of Day 18's
-            // in-memory queue - AuditSubscriptionWorker and
-            // StatsSubscriptionWorker (Messaging/) each get their own
-            // independent copy via the topic's two subscriptions. The
-            // publish itself is awaited (the durable hand-off to the
-            // broker); what's NOT awaited is either subscription actually
-            // processing it - that happens later, out of this request
-            // entirely. See day-19/README.md.
-            try
+            var message = new QuoteCreatedMessage
             {
-                await publisher.PublishAsync(new QuoteCreatedMessage
-                {
-                    QuoteId = created.Id,
-                    CreatedByUserId = callerId,
-                    CreatedAtUtc = DateTimeOffset.UtcNow,
-                }, ct);
-            }
-            catch (Exception ex)
+                QuoteId = created.Id,
+                CreatedByUserId = callerId,
+                CreatedAtUtc = DateTimeOffset.UtcNow,
+            };
+            db.OutboxMessages.Add(new OutboxMessage
             {
-                // A publish failure must not turn a successful quote
-                // creation into a client-visible failure - same principle
-                // as Day 18's full-queue handling, just a different
-                // failure mode (broker unreachable, not a bounded queue).
-                logger.LogError(ex, "Failed to publish QuoteCreated for quote {QuoteId}.", created.Id);
-            }
+                MessageType = nameof(QuoteCreatedMessage),
+                Payload = JsonSerializer.Serialize(message),
+                // Same deterministic id QuoteCreatedPublisher would have
+                // derived inline - preserves Day 19's consumer dedupe.
+                MessageId = $"quote-created:{created.Id}",
+                OccurredAt = message.CreatedAtUtc,
+                ProcessedAt = null,
+            });
+            await db.SaveChangesAsync(ct);
+
+            await tx.CommitAsync(ct);
 
             return Results.Created($"/api/quotes/{created.Id}", created);
         }).RequireAuthorization("can-edit-quotes");
