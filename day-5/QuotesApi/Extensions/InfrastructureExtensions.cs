@@ -38,11 +38,20 @@ public static class InfrastructureExtensions
             return new ServiceBusClient(options.ConnectionString);
         });
         services.AddSingleton<QuoteCreatedPublisher>();
+        // Same singleton instance under both the concrete type and the
+        // abstraction OutboxRelay actually depends on.
+        services.AddSingleton<IQuoteEventPublisher>(sp => sp.GetRequiredService<QuoteCreatedPublisher>());
 
         // Competing consumers: both subscriptions on the same topic,
         // each with its own ServiceBusProcessor pump.
         services.AddHostedService<AuditSubscriptionWorker>();
         services.AddHostedService<StatsSubscriptionWorker>();
+
+        // Day 20: POST /api/quotes no longer publishes inline - it writes
+        // an OutboxMessage row in the same transaction as the Quote row,
+        // and this relay is what actually calls IQuoteEventPublisher,
+        // asynchronously, on its own poll loop. See day-20/README.md.
+        services.AddHostedService<OutboxRelay>();
 
         return services;
     }
