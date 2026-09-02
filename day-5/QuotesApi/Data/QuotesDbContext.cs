@@ -14,6 +14,7 @@ public class QuotesDbContext : DbContext
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
     public DbSet<ProcessedMessage> ProcessedMessages => Set<ProcessedMessage>();
+    public DbSet<OutboxMessage> OutboxMessages => Set<OutboxMessage>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -28,6 +29,14 @@ public class QuotesDbContext : DbContext
         modelBuilder.Entity<ProcessedMessage>(entity =>
         {
             entity.HasIndex(p => new { p.SubscriptionName, p.MessageId }).IsUnique();
+        });
+
+        // OutboxRelay's poll query filters on ProcessedAt IS NULL every
+        // 5 seconds - this index is what keeps that a lookup instead of
+        // a growing table scan as processed rows accumulate.
+        modelBuilder.Entity<OutboxMessage>(entity =>
+        {
+            entity.HasIndex(o => o.ProcessedAt);
         });
 
         modelBuilder.Entity<Collection>(entity =>
