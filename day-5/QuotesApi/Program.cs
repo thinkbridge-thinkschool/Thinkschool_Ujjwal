@@ -89,6 +89,35 @@ using (var scope = app.Services.CreateScope())
 
 app.MapQuoteEndpoints();
 
+// Day 21 measurement support only - not part of the product API, gated
+// to Development so it never exists in a deployed environment. Lets the
+// standalone load harness (day-21/) read/reset the real database-hit
+// count around a run instead of assuming what the cache did from the
+// outside. See day-21/README.md.
+if (app.Environment.IsDevelopment())
+{
+    // quotesQueries is the number the load harness actually measures
+    // against (day-21/README.md) - calls to QuoteRepository.GetPagedAsync
+    // specifically. dbCommands is every SQL command the process has run,
+    // included for general visibility, but it also counts OutboxRelay's
+    // own 5-second poll queries, so it is NOT what "cold cache, N
+    // concurrent requests -> 1 DB hit" is measured against.
+    app.MapGet("/api/diagnostics/db-hits", (
+        QuotesApi.Diagnostics.DbHitCounterInterceptor dbCommandCounter,
+        QuotesApi.Diagnostics.QuoteQueryCounter quoteQueryCounter) =>
+        Results.Ok(new { dbCommands = dbCommandCounter.Count, quotesQueries = quoteQueryCounter.Count }))
+        .AllowAnonymous();
+
+    app.MapPost("/api/diagnostics/db-hits/reset", (
+        QuotesApi.Diagnostics.DbHitCounterInterceptor dbCommandCounter,
+        QuotesApi.Diagnostics.QuoteQueryCounter quoteQueryCounter) =>
+    {
+        dbCommandCounter.Reset();
+        quoteQueryCounter.Reset();
+        return Results.NoContent();
+    }).AllowAnonymous();
+}
+
 // Proof endpoint for the Day 3 exercise: reports which scheme validated the
 // request, so one curl distinguishes an internal token from an Entra one.
 app.MapGet("/api/auth/whoami", (ClaimsPrincipal user) => Results.Ok(new

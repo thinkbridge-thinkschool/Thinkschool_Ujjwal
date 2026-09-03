@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Caching.Hybrid;
 using QuotesApi.Messaging;
 using QuotesApi.Clients;
 using QuotesApi.Configuration;
@@ -145,12 +146,48 @@ auth.MapPost("/refresh", async (RefreshRequest request, QuotesDbContext db, IJwt
     });
 });
 
-        group.MapGet("", async (IQuoteRepository repo, CancellationToken ct, int page = 1, int size = 10) =>
+        group.MapGet("", async (HybridCache cache, IQuoteRepository repo, IConfiguration config, CancellationToken ct, int page = 1, int size = 10) =>
         {
             if (page < 1) page = 1;
             if (size < 1) size = 10;
             if (size > 100) size = 100;
-            var quotes = await repo.GetPagedAsync(page, size, ct);
+
+            // Measurement-only escape hatch for day-21's before/after load
+            // test - Caching:Enabled=false (an env var/config override,
+            // never a code change) bypasses HybridCache entirely so the
+            // "before" run is a genuine uncached baseline, not a
+            // never-populated cache that still pays HybridCache's own
+            // overhead. Defaults to true; production behavior is
+            // unaffected unless this is explicitly set.
+            if (!config.GetValue("Caching:Enabled", true))
+            {
+                return Results.Ok(await repo.GetPagedAsync(page, size, ct));
+            }
+
+            // The key MUST carry both page and size - a key that ignores
+            // either one serves the same cached page for every request
+            // regardless of what was actually asked for. This endpoint is
+            // anonymous and the response carries nothing user-specific
+            // (no per-caller filtering, no createdByUserId-scoped view),
+            // so a key built only from page/size is safe to share across
+            // every caller - it would NOT be safe to cache this way if the
+            // response ever became user-specific (e.g. "my quotes"),
+            // since a key missing the user dimension means one user sees
+            // another's data. See day-21/README.md.
+            var cacheKey = $"quotes:page:{page}:size:{size}";
+
+            // GetOrCreateAsync IS the stampede protection: concurrent
+            // callers requesting the same key while it's missing are
+            // coalesced onto a single in-flight factory call, not one
+            // database hit per caller. Tagged "quotes" so a write can
+            // evict every page/size variant at once via RemoveByTagAsync,
+            // instead of needing to know which exact keys exist.
+            var quotes = await cache.GetOrCreateAsync(
+                cacheKey,
+                async cacheCt => await repo.GetPagedAsync(page, size, cacheCt),
+                tags: ["quotes"],
+                cancellationToken: ct);
+
             return Results.Ok(quotes);
         });
 
@@ -177,7 +214,7 @@ auth.MapPost("/refresh", async (RefreshRequest request, QuotesDbContext db, IJwt
             }
         }).AllowAnonymous();
 
-        group.MapPost("", async (CreateQuoteRequest request, ClaimsPrincipal user, IQuoteRepository repo, QuotesDbContext db, CancellationToken ct) =>
+        group.MapPost("", async (CreateQuoteRequest request, ClaimsPrincipal user, IQuoteRepository repo, QuotesDbContext db, HybridCache cache, CancellationToken ct) =>
         {
             var errors = new Dictionary<string, string[]>();
             if (string.IsNullOrWhiteSpace(request.Author))
@@ -234,10 +271,21 @@ auth.MapPost("/refresh", async (RefreshRequest request, QuotesDbContext db, IJwt
 
             await tx.CommitAsync(ct);
 
+            // Day 21: a successful write invalidates the cached list -
+            // otherwise this new quote stays invisible to GET /api/quotes
+            // until whichever cached page/size entries happen to expire.
+            // RemoveByTagAsync clears every page/size key at once; paged
+            // keys ("quotes:page:1:size:10", "quotes:page:2:size:10", ...)
+            // can't be evicted individually without knowing every
+            // page/size combination anyone has ever requested, which the
+            // API has no way to enumerate. The tag is what makes "evict
+            // the whole list" possible without that.
+            await cache.RemoveByTagAsync("quotes", ct);
+
             return Results.Created($"/api/quotes/{created.Id}", created);
         }).RequireAuthorization("can-edit-quotes");
 
-        group.MapDelete("/{id:int}", async (int id, ClaimsPrincipal user, IQuoteRepository repo, IAuthorizationService authService, CancellationToken ct) =>
+        group.MapDelete("/{id:int}", async (int id, ClaimsPrincipal user, IQuoteRepository repo, IAuthorizationService authService, HybridCache cache, CancellationToken ct) =>
         {
             var quote = await repo.GetByIdAsync(id, ct);
             if (quote is null)
@@ -248,6 +296,12 @@ auth.MapPost("/refresh", async (RefreshRequest request, QuotesDbContext db, IJwt
                 return Results.Forbid();
 
             await repo.DeleteAsync(id, ct);
+
+            // Same reasoning as the POST handler above - a deleted quote
+            // must stop appearing in GET /api/quotes immediately, not
+            // whenever the cached page it happened to land on expires.
+            await cache.RemoveByTagAsync("quotes", ct);
+
             return Results.NoContent();
         }).RequireAuthorization("can-delete-quotes");
 
