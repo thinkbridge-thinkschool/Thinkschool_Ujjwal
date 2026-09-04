@@ -116,6 +116,31 @@ if (app.Environment.IsDevelopment())
         quoteQueryCounter.Reset();
         return Results.NoContent();
     }).AllowAnonymous();
+
+    // Day 22 measurement support only - drives the Redis resilience
+    // pipeline directly, bypassing HybridCache/L1 entirely (a fresh
+    // random key every call, so L1 can never satisfy it and the request
+    // always reaches ResilientDistributedCache). Without this, proving
+    // the circuit breaker's lifecycle over HTTP would mostly be fighting
+    // L1's 10s local cache masking repeat GET /api/quotes calls from ever
+    // reaching Redis at all. See day-22/README.md.
+    app.MapPost("/api/diagnostics/redis-probe", async (Microsoft.Extensions.Caching.Distributed.IDistributedCache cache, CancellationToken ct) =>
+    {
+        try
+        {
+            var key = $"probe:{Guid.NewGuid():N}";
+            await cache.SetAsync(
+                key,
+                "1"u8.ToArray(),
+                new Microsoft.Extensions.Caching.Distributed.DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(5) },
+                ct);
+            return Results.Ok(new { ok = true });
+        }
+        catch (Exception ex)
+        {
+            return Results.Ok(new { ok = false, exception = ex.GetType().Name, message = ex.Message });
+        }
+    }).AllowAnonymous();
 }
 
 // Proof endpoint for the Day 3 exercise: reports which scheme validated the
