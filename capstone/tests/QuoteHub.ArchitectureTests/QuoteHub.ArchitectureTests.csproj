@@ -1,0 +1,33 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="coverlet.collector" Version="6.0.4" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
+    <PackageReference Include="xunit" Version="2.9.3" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="3.1.4" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\QuoteHub.Api\QuoteHub.Api.csproj" />
+    <ProjectReference Include="..\..\src\Shared\QuoteHub.SharedKernel\QuoteHub.SharedKernel.csproj" />
+    <ProjectReference Include="..\..\src\Shared\QuoteHub.Contracts\QuoteHub.Contracts.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Curation\QuoteHub.Curation.Domain\QuoteHub.Curation.Domain.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Curation\QuoteHub.Curation.Application\QuoteHub.Curation.Application.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Curation\QuoteHub.Curation.Infrastructure\QuoteHub.Curation.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Moderation\QuoteHub.Moderation.Domain\QuoteHub.Moderation.Domain.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Moderation\QuoteHub.Moderation.Application\QuoteHub.Moderation.Application.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Moderation\QuoteHub.Moderation.Infrastructure\QuoteHub.Moderation.Infrastructure.csproj" />
+  </ItemGroup>
+
+</Project>
