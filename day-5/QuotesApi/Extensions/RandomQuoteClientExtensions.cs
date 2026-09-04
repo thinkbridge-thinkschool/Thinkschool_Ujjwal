@@ -2,8 +2,10 @@ using Microsoft.Extensions.Http.Resilience;
 using Microsoft.Extensions.Options;
 using Polly;
 using Polly.CircuitBreaker;
+using Polly.RateLimiting;
 using Polly.Retry;
 using Polly.Timeout;
+using System.Threading.RateLimiting;
 using QuotesApi.Clients;
 using QuotesApi.Configuration;
 
@@ -42,9 +44,25 @@ public static class RandomQuoteClientExtensions
         ResilienceOptions options,
         ILogger logger)
     {
-        // Total timeout is outermost so it bounds the whole retry sequence's wall-clock
-        // time, not just a single attempt.
+        // Day 22: bulkhead is outermost of all - a rejection here must not
+        // even start the timeout clock or count toward the circuit
+        // breaker's failure ratio, it's a distinct "we're too busy"
+        // signal (see EndpointExtensions.cs's RateLimiterRejectedException
+        // handling and day-22/README.md). This endpoint only ever issues
+        // GET requests to zenquotes.io (RandomQuoteClient.GetRandomQuoteAsync
+        // is the only caller, and it only ever calls _httpClient.GetAsync) -
+        // there is no non-idempotent call this pipeline could ever retry,
+        // so retry is safe here unconditionally, not just by convention.
+        //
+        // Total timeout is outermost of the pre-existing three so it bounds
+        // the whole retry sequence's wall-clock time, not just a single
+        // attempt.
         builder
+            .AddConcurrencyLimiter(new ConcurrencyLimiterOptions
+            {
+                PermitLimit = options.BulkheadMaxConcurrency,
+                QueueLimit = options.BulkheadMaxQueue,
+            })
             .AddTimeout(options.TotalTimeout)
             .AddRetry(new RetryStrategyOptions<HttpResponseMessage>
             {
