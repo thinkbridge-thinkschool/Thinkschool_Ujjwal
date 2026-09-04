@@ -1,7 +1,10 @@
 using Azure.Messaging.ServiceBus;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Caching.Hybrid;
+using Microsoft.Extensions.Caching.StackExchangeRedis;
 using Microsoft.Extensions.Options;
+using QuotesApi.Caching;
 using QuotesApi.Configuration;
 using QuotesApi.Data;
 using QuotesApi.Diagnostics;
@@ -66,14 +69,63 @@ public static class InfrastructureExtensions
         // IDistributedCache). ConnectionStrings:Redis comes from
         // user-secrets/environment only, same rule as every other
         // connection-shaped value in this project - this repo is public.
-        // AddStackExchangeRedisCache registers IDistributedCache;
-        // AddHybridCache automatically uses it as L2 and an in-memory
-        // cache as L1 once both are present.
-        services.AddStackExchangeRedisCache(options =>
+        //
+        // Day 22: the L2 registration is no longer AddStackExchangeRedisCache
+        // (which would register the raw Redis-backed IDistributedCache
+        // directly). Instead the real RedisCache is constructed by hand
+        // and wrapped in ResilientDistributedCache before it's registered
+        // as IDistributedCache - so HybridCache (which resolves
+        // IDistributedCache for its L2) gets the resilience-wrapped
+        // version transparently, with no change to HybridCache's own
+        // registration or to caching behavior/keys/tags/TTLs. See
+        // Caching/ResilientDistributedCache.cs and
+        // Extensions/RedisResilienceExtensions.cs for the pipeline itself.
+        services.AddOptions<ResilienceOptions>()
+            .Bind(config.GetSection(ResilienceOptions.SectionName));
+
+        services.AddSingleton<IDistributedCache>(sp =>
         {
-            options.Configuration = config.GetConnectionString("Redis") ?? "localhost:6379";
-            options.InstanceName = "quotesapi:";
+            var resilienceOptions = sp.GetRequiredService<IOptions<ResilienceOptions>>().Value;
+
+            // Found by actually running this, not assumed: Polly's
+            // AddTimeout is cooperative-only in Polly v8 - it hands the
+            // wrapped delegate a timeout-linked CancellationToken, but has
+            // no way to forcibly abort a call that doesn't observe it.
+            // StackExchange.Redis's own async calls don't reliably respect
+            // an external token while a command is queued waiting for a
+            // connection - measured attempts running the full ~5s Redis-
+            // client-internal default timeout regardless of a 1s Polly
+            // timeout wrapped around them. The real fix is making the
+            // underlying client itself fail fast: ConnectTimeout/
+            // SyncTimeout/AsyncTimeout all pinned to RedisPerAttemptTimeout
+            // so a stuck connection gives up at the transport level, with
+            // Polly's timeout remaining as a backstop for whatever that
+            // doesn't catch. See day-22/README.md.
+            var configOptions = StackExchange.Redis.ConfigurationOptions.Parse(
+                config.GetConnectionString("Redis") ?? "localhost:6379");
+            configOptions.ConnectTimeout = (int)resilienceOptions.RedisPerAttemptTimeout.TotalMilliseconds;
+            configOptions.SyncTimeout = (int)resilienceOptions.RedisPerAttemptTimeout.TotalMilliseconds;
+            configOptions.AsyncTimeout = (int)resilienceOptions.RedisPerAttemptTimeout.TotalMilliseconds;
+            // Keep retrying to reconnect in the background rather than
+            // giving up on the multiplexer permanently after one failure -
+            // that's what lets calls succeed again the moment Redis comes
+            // back, without needing this singleton recreated.
+            configOptions.AbortOnConnectFail = false;
+            configOptions.ConnectRetry = 1;
+
+            var redisOptions = new RedisCacheOptions
+            {
+                ConfigurationOptions = configOptions,
+                InstanceName = "quotesapi:",
+            };
+            var inner = new RedisCache(Microsoft.Extensions.Options.Options.Create(redisOptions));
+
+            var logger = sp.GetRequiredService<ILoggerFactory>().CreateLogger("QuotesApi.Redis.Resilience");
+            var pipeline = RedisResilienceExtensions.BuildPipeline(resilienceOptions, logger);
+
+            return new ResilientDistributedCache(inner, pipeline, logger);
         });
+
         services.AddHybridCache(options =>
         {
             // Expiration (L2/Redis, and the ceiling for L1 too): a safety

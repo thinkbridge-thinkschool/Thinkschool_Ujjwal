@@ -12,6 +12,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Options;
 using QuotesApi.Authorization;
 using Polly.CircuitBreaker;
+using Polly.RateLimiting;
 using Polly.Timeout;
 using System.Security.Claims;
 using System.Text.Json;
@@ -207,6 +208,18 @@ auth.MapPost("/refresh", async (RefreshRequest request, QuotesDbContext db, IJwt
                 var quote = await client.GetRandomQuoteAsync(ct);
                 return Results.Ok(quote);
             }
+            // Day 22: bulkhead rejection caught and logged as its own case,
+            // distinct from a timeout or an open circuit - from the caller's
+            // side all three just look like "no quote came back," but they
+            // mean different things operationally (too much concurrent
+            // load vs. a slow upstream vs. a known-down upstream), and
+            // conflating them in the log is exactly what this task asked
+            // not to do.
+            catch (RateLimiterRejectedException ex)
+            {
+                logger.LogWarning(ex, "Random quote request rejected by bulkhead - too many concurrent calls in flight.");
+                return Results.StatusCode(StatusCodes.Status503ServiceUnavailable);
+            }
             catch (Exception ex) when (ex is HttpRequestException or TimeoutRejectedException or BrokenCircuitException)
             {
                 logger.LogError(ex, "Random quote upstream unavailable after retries.");
@@ -214,7 +227,7 @@ auth.MapPost("/refresh", async (RefreshRequest request, QuotesDbContext db, IJwt
             }
         }).AllowAnonymous();
 
-        group.MapPost("", async (CreateQuoteRequest request, ClaimsPrincipal user, IQuoteRepository repo, QuotesDbContext db, HybridCache cache, CancellationToken ct) =>
+        group.MapPost("", async (CreateQuoteRequest request, ClaimsPrincipal user, IQuoteRepository repo, QuotesDbContext db, HybridCache cache, ILogger<Program> logger, CancellationToken ct) =>
         {
             var errors = new Dictionary<string, string[]>();
             if (string.IsNullOrWhiteSpace(request.Author))
@@ -280,12 +293,35 @@ auth.MapPost("/refresh", async (RefreshRequest request, QuotesDbContext db, IJwt
             // page/size combination anyone has ever requested, which the
             // API has no way to enumerate. The tag is what makes "evict
             // the whole list" possible without that.
-            await cache.RemoveByTagAsync("quotes", ct);
+            //
+            // Day 22: a real regression, found by actually running the
+            // integration suite after adding the Redis resilience
+            // pipeline, not anticipated in advance - RemoveByTagAsync does
+            // NOT get HybridCache's own broad L2-failure protection the
+            // way GetOrCreateAsync does (proven in day-21/README.md and
+            // reconfirmed for BrokenCircuitException in day-22's live
+            // verification). Left unguarded, a struggling or open-circuit
+            // Redis turned a successful quote creation into a 500 -
+            // exactly the failure mode this whole task exists to prevent,
+            // just on the write path instead of the read path. Caught and
+            // logged instead: the quote is already durably committed by
+            // this point, so a failed invalidation only means the cache
+            // may serve a stale list for up to its 60s Expiration
+            // (InfrastructureExtensions.cs) - a real but bounded and minor
+            // cost, incomparable to failing the whole request.
+            try
+            {
+                await cache.RemoveByTagAsync("quotes", ct);
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex, "Failed to invalidate cached quotes list after creating quote {QuoteId} - list may serve stale data until it expires.", created.Id);
+            }
 
             return Results.Created($"/api/quotes/{created.Id}", created);
         }).RequireAuthorization("can-edit-quotes");
 
-        group.MapDelete("/{id:int}", async (int id, ClaimsPrincipal user, IQuoteRepository repo, IAuthorizationService authService, HybridCache cache, CancellationToken ct) =>
+        group.MapDelete("/{id:int}", async (int id, ClaimsPrincipal user, IQuoteRepository repo, IAuthorizationService authService, HybridCache cache, ILogger<Program> logger, CancellationToken ct) =>
         {
             var quote = await repo.GetByIdAsync(id, ct);
             if (quote is null)
@@ -297,10 +333,20 @@ auth.MapPost("/refresh", async (RefreshRequest request, QuotesDbContext db, IJwt
 
             await repo.DeleteAsync(id, ct);
 
-            // Same reasoning as the POST handler above - a deleted quote
-            // must stop appearing in GET /api/quotes immediately, not
-            // whenever the cached page it happened to land on expires.
-            await cache.RemoveByTagAsync("quotes", ct);
+            // Same reasoning as the POST handler above, both the
+            // invalidation itself and Day 22's catch around it - a
+            // deleted quote must stop appearing in GET /api/quotes
+            // immediately when the cache is healthy, but a cache failure
+            // here must not turn an already-completed delete into a
+            // client-visible 500.
+            try
+            {
+                await cache.RemoveByTagAsync("quotes", ct);
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex, "Failed to invalidate cached quotes list after deleting quote {QuoteId} - list may serve stale data until it expires.", id);
+            }
 
             return Results.NoContent();
         }).RequireAuthorization("can-delete-quotes");
