@@ -9,6 +9,7 @@ import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { Router } from '@angular/router';
 import { QuotesStore } from '../../store/quotes-store';
 import { notBlank } from './not-blank.validator';
+import { quoteContent } from './quote-content.validator';
 import { AppHttpError } from '../../http/app-http-error';
 
 type SubmitState = 'idle' | 'submitting' | 'success' | 'error';
@@ -37,11 +38,11 @@ export class QuoteFormComponent {
   protected readonly form = new FormGroup({
     author: new FormControl('', {
       nonNullable: true,
-      validators: [notBlank, Validators.maxLength(200)],
+      validators: [notBlank, quoteContent, Validators.maxLength(200)],
     }),
     text: new FormControl('', {
       nonNullable: true,
-      validators: [notBlank, Validators.maxLength(2000)],
+      validators: [notBlank, quoteContent, Validators.maxLength(2000)],
     }),
   });
 
@@ -53,6 +54,9 @@ export class QuoteFormComponent {
     const label = name === 'author' ? 'Author' : 'Text';
     if (control.hasError('required')) {
       return `${label} is required.`;
+    }
+    if (control.hasError('notQuoteContent')) {
+      return `${label} must contain real words, not just numbers, symbols, or an email address.`;
     }
     if (control.hasError('maxlength')) {
       const limit = control.getError('maxlength').requiredLength;
