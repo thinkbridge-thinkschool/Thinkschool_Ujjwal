@@ -24,8 +24,16 @@ public static class InfrastructureExtensions
         services.AddSingleton<DbHitCounterInterceptor>();
         services.AddSingleton<QuoteQueryCounter>();
 
+        // SQL Server everywhere - local dev and production both. Local dev
+        // connects to a dedicated container (ConnectionStrings:Default in
+        // user-secrets, never appsettings.json); production points at
+        // Azure SQL via the same setting, supplied as an App Service
+        // Application Setting. Kept single-provider deliberately: EF Core
+        // migrations are scanned per DbContext, not per provider, so a
+        // second provider's migrations living in this same project would
+        // get applied here too and fail against the wrong engine.
         services.AddDbContext<QuotesDbContext>((sp, options) =>
-            options.UseSqlite(config.GetConnectionString("Default") ?? "Data Source=quotes.db")
+            options.UseSqlServer(config.GetConnectionString("Default"))
                    .AddInterceptors(sp.GetRequiredService<DbHitCounterInterceptor>()));
 
         services.AddScoped<IQuoteRepository, QuoteRepository>();
