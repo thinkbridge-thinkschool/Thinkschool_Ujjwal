@@ -16,6 +16,7 @@ using Polly.RateLimiting;
 using Polly.Timeout;
 using System.Security.Claims;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 
 
 namespace QuotesApi.Extensions;
@@ -232,8 +233,13 @@ auth.MapPost("/refresh", async (RefreshRequest request, QuotesDbContext db, IJwt
             var errors = new Dictionary<string, string[]>();
             if (string.IsNullOrWhiteSpace(request.Author))
                 errors["author"] = new[] { "Author is required." };
+            else if (!IsQuoteContent(request.Author))
+                errors["author"] = new[] { "Author must contain real words, not just numbers, symbols, or an email address." };
+
             if (string.IsNullOrWhiteSpace(request.Text))
                 errors["text"] = new[] { "Text is required." };
+            else if (!IsQuoteContent(request.Text))
+                errors["text"] = new[] { "Text must contain real words, not just numbers, symbols, or an email address." };
 
             if (errors.Count > 0)
                 return Results.ValidationProblem(errors);
@@ -414,5 +420,19 @@ auth.MapPost("/refresh", async (RefreshRequest request, QuotesDbContext db, IJwt
                 return Results.NotFound();
             }
         }).RequireAuthorization("can-edit-quotes");
+    }
+
+    // A bare email address, or a value with no real word in it at all
+    // (all digits, all punctuation/symbols) isn't quote/author content -
+    // reject it here so the same rule the client enforces
+    // (quote-content.validator.ts) can't be bypassed by calling the API
+    // directly.
+    private static readonly Regex EmailPattern = new(@"^[^\s@]+@[^\s@]+\.[^\s@]+$", RegexOptions.Compiled);
+    private static readonly Regex WordPattern = new("[A-Za-z]{2,}", RegexOptions.Compiled);
+
+    private static bool IsQuoteContent(string value)
+    {
+        var trimmed = value.Trim();
+        return !EmailPattern.IsMatch(trimmed) && WordPattern.IsMatch(trimmed);
     }
 }
