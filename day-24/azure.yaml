@@ -1,0 +1,45 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/Azure/azure-dev/main/schemas/v1.0/azure.yaml.json
+#
+# A fresh azd config, not a reuse of day-5/azure.yaml - that one targets
+# containerapp, a host the API has never actually run on. This app runs
+# on App Service (see day-17/README.md), so that's what "services" points
+# at here.
+#
+# Infra provisioning itself is NOT done by plain `azd provision` in this
+# project. azd 1.31.1's azure.yaml schema has no actionOnUnmanage/
+# denySettings fields for its alpha deployment-stacks support (confirmed
+# by checking the published schema - those properties don't exist in it),
+# so getting deliberate control over both meant stepping outside azd's
+# built-in provisioning and calling `az stack group create` directly from
+# a hook instead. azd still owns environment/parameter management
+# (`azd env new/list/select`); the hook is what actually creates or
+# updates the stack. See day-24/README.md for the full reasoning and the
+# exact commands that were run.
+
+name: day-24
+metadata:
+    template: azd-init@1.31.1
+
+infra:
+    provider: bicep
+    path: ../day-23
+    module: main
+
+services:
+    quotes-api:
+        project: ../day-5/QuotesApi
+        host: appservice
+        language: dotnet
+        # `azd deploy` (pushing application code) is out of scope for this
+        # task - day-17 already deployed the running code by hand, and
+        # this task is about the STACK managing existing infrastructure,
+        # not about a code redeploy pipeline. This entry exists so
+        # azure.yaml is structurally complete and honest about what this
+        # app actually runs on, not because `azd deploy` was exercised.
+
+hooks:
+    preprovision:
+        shell: sh
+        run: ./hooks/deploy-stack.sh
+        interactive: true
+        continueOnError: false
