@@ -29,11 +29,23 @@ param sqlSkuCapacity = 2
 param sqlMaxSizeBytes = 34359738368 // 32 GB
 param sqlUseFreeLimit = true
 
+// The App Service's deployed CODE still expects its old SQLite
+// connection string - the UseSqlServer code change was made locally but
+// never redeployed (day-24 is about adopting resources into a stack,
+// not about finishing that cutover). Pushing the computed Azure SQL
+// connection string here instead would crash the live app the moment
+// it restarts after this app setting changes. Remove this override once
+// the SQL Server-based build is actually redeployed to this Web App.
+param sqlConnectionStringOverride = 'Data Source=/home/quotes.db'
+
 // --- Service Bus - Standard is the cheapest tier that supports topics
-// (Basic does not). Not deployed yet - see README. ---
+// (Basic does not), but Standard still has a real monthly cost - there
+// is no free tier at all. deployServiceBus stays false until that cost
+// is explicitly accepted; see day-24/README.md. ---
 param serviceBusNamespaceName = 'sb-quoteshub-dev'
 param serviceBusSkuName = 'Standard'
 param serviceBusTopicName = 'quote-created'
+param deployServiceBus = false
 
 // --- Static Web App - Free is the cheapest tier that exists. Matches
 // what is actually deployed today. ---
