@@ -30,8 +30,11 @@ param entraAudience string
 @description('JWT signing key. Secure - supplied at deploy time, never a literal or default.')
 @secure()
 param jwtKey string
-@description('Whether to wire a Service Bus connection string into the API. False until the app actually adopts real Azure Service Bus - see README.')
+@description('Whether to wire a Service Bus connection string into the API. False until the app actually adopts real Azure Service Bus - see README. Tied to deployServiceBus: the app setting only makes sense if the namespace actually exists.')
 param enableServiceBusIntegration bool = false
+
+@description('Whether to deploy the Service Bus namespace/topic/subscriptions at all. Service Bus has no free tier - every SKU that supports topics (Standard or above) has a real cost, so this defaults to false and must be turned on deliberately once that cost is accepted. See day-24/README.md.')
+param deployServiceBus bool = false
 
 // --- Azure SQL ---
 @description('Azure SQL logical server name - must be globally unique.')
@@ -55,6 +58,9 @@ param sqlSkuCapacity int
 param sqlMaxSizeBytes int = 34359738368
 @description('Whether this database uses the Azure SQL free monthly limit offer (allowed on only one database per subscription).')
 param sqlUseFreeLimit bool = false
+
+@description('When non-empty, overrides the computed Azure SQL connection string sent to the API as ConnectionStrings__Default. Exists so an environment whose deployed application code has not yet been rebuilt against SQL Server (still expects its old connection string, e.g. a SQLite path) can be adopted into a stack without that setting changing out from under it and crashing the running app on restart. Not a secret by itself in the one case this is actually used for today (a bare SQLite file path), but treat it as sensitive if it is ever set to anything else.')
+param sqlConnectionStringOverride string = ''
 
 // --- Service Bus ---
 @description('Service Bus namespace name - must be globally unique.')
@@ -108,7 +114,7 @@ module sql 'modules/sql.bicep' = {
   }
 }
 
-module serviceBus 'modules/servicebus.bicep' = {
+module serviceBus 'modules/servicebus.bicep' = if (deployServiceBus) {
   name: 'servicebus-deployment'
   params: {
     namespaceName: serviceBusNamespaceName
@@ -152,7 +158,9 @@ module appService 'modules/appservice.bicep' = {
     corsAllowedOrigin: 'https://${staticWebApp.outputs.defaultHostname}'
     entraAudience: entraAudience
     jwtKey: jwtKey
-    sqlConnectionString: 'Server=tcp:${sql.outputs.serverFqdn},1433;Database=${sqlDatabaseName};User Id=${sqlAdministratorLogin};Password=${sqlAdministratorPassword};Encrypt=True;TrustServerCertificate=False;'
+    sqlConnectionString: empty(sqlConnectionStringOverride)
+      ? 'Server=tcp:${sql.outputs.serverFqdn},1433;Database=${sqlDatabaseName};User Id=${sqlAdministratorLogin};Password=${sqlAdministratorPassword};Encrypt=True;TrustServerCertificate=False;'
+      : sqlConnectionStringOverride
     enableServiceBusIntegration: enableServiceBusIntegration
     serviceBusConnectionString: serviceBusConnectionString
   }
@@ -161,4 +169,4 @@ module appService 'modules/appservice.bicep' = {
 output webAppHostName string = appService.outputs.webAppHostName
 output staticWebAppHostName string = staticWebApp.outputs.defaultHostname
 output sqlServerFqdn string = sql.outputs.serverFqdn
-output serviceBusNamespaceName string = serviceBus.outputs.namespaceName
+output serviceBusNamespaceName string = deployServiceBus ? serviceBus!.outputs.namespaceName : ''

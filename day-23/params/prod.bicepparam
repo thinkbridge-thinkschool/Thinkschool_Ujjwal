@@ -3,46 +3,67 @@ using '../main.bicep'
 param location = 'centralus'
 param environmentName = 'prod'
 
-// --- App Service - P1v3 (PremiumV3): supports Always On, autoscale, and
-// staging slots, none of which F1 allows. A realistic production tier,
-// not the cheapest one. ---
+// --- App Service - REDUCED FOR COST (day-24): the subscription backing
+// this deployment has no usable credit and expires on the 12th, so this
+// is F1/Free, same as dev, rather than the P1v3/PremiumV3 a real
+// production environment would actually run. The prod-* naming and the
+// fact that this is a wholly separate stack from dev is the thing being
+// demonstrated here, not the SKU size. In reality this row would be:
+//   appServiceSkuName = 'P1v3', appServiceSkuTier = 'PremiumV3',
+//   appServiceSkuCapacity = 2, appServiceAlwaysOn = true
+// (supports Always On, autoscale, staging slots - none of which F1 allows).
 param appServicePlanName = 'asp-quotesapi-prod'
 param webAppName = 'quotesapi-thinkschool-prod'
-param appServiceSkuName = 'P1v3'
-param appServiceSkuTier = 'PremiumV3'
-param appServiceSkuCapacity = 2 // two instances - no single point of failure
-param appServiceAlwaysOn = true
+param appServiceSkuName = 'F1'
+param appServiceSkuTier = 'Free'
+param appServiceSkuCapacity = 1
+param appServiceAlwaysOn = false // F1 does not support Always On
 param dotnetVersion = '10.0'
 param aspnetCoreEnvironment = 'Production'
 param entraAudience = '9595ac6d-99d5-42b5-bffe-fed74bce6f42'
-param enableServiceBusIntegration = true // production is expected to have adopted real Service Bus by then
+param enableServiceBusIntegration = false // Service Bus is not being deployed at all right now - see below
 
-// --- Azure SQL - GP_Gen5 provisioned (not serverless): steady-state
-// production load doesn't want serverless's cold-start pause behavior,
-// and a fixed vCore count is predictable to budget for. ---
+// --- Azure SQL - REDUCED FOR COST (day-24): serverless GP_S_Gen5, same
+// family as dev, instead of a provisioned GP_Gen5 with 4 fixed vCores.
+// useFreeLimit stays false here on purpose - Azure allows the free-limit
+// offer on only ONE database per subscription, and dev's database
+// already claims it. This is therefore "near-free" rather than free:
+// serverless auto-pauses to zero compute cost when idle, leaving only a
+// small storage charge (well under $1/month for a near-empty database).
+// In reality this row would be:
+//   sqlSkuName = 'GP_Gen5' (provisioned, not serverless), sqlSkuCapacity = 4,
+//   sqlMaxSizeBytes = 137438953472 (128 GB)
+// (steady-state production load doesn't want serverless's cold-start
+// pause behavior, and a fixed vCore count is predictable to budget for).
 param sqlServerName = 'sql-quotesapi-prod'
 param sqlAdministratorLogin = 'quoteshubadmin'
 param sqlDatabaseName = 'quoteshub'
 param sqlSkuTier = 'GeneralPurpose'
-param sqlSkuName = 'GP_Gen5'
+param sqlSkuName = 'GP_S_Gen5'
 param sqlSkuFamily = 'Gen5'
-param sqlSkuCapacity = 4
-param sqlMaxSizeBytes = 137438953472 // 128 GB
-param sqlUseFreeLimit = false // the free-limit offer is capped at one database per subscription - dev already claims it
+param sqlSkuCapacity = 2
+param sqlMaxSizeBytes = 34359738368 // 32 GB
+param sqlUseFreeLimit = false
 
-// --- Service Bus - Premium: dedicated resource capacity and predictable
-// latency instead of Standard's shared-tenant throughput. This is a real
-// cost jump (fixed hourly charge regardless of traffic) - see README. ---
+// --- Service Bus - NOT DEPLOYED. There is no free tier for any SKU that
+// supports topics (Basic doesn't support them at all; Standard and
+// Premium both bill continuously). Deploying this for a demo would be a
+// real, avoidable monthly cost - deployServiceBus stays false in both
+// dev and prod until that cost is explicitly asked for and accepted.
+// These SKU values are kept only to document what prod would use if it
+// were ever turned on - none of them are provisioned right now.
 param serviceBusNamespaceName = 'sb-quoteshub-prod'
 param serviceBusSkuName = 'Premium'
 param serviceBusPremiumMessagingUnits = 1
 param serviceBusTopicName = 'quote-created'
+param deployServiceBus = false
 
-// --- Static Web App - Standard: custom domains with managed
-// certificates beyond the default *.azurestaticapps.net one, and a
-// larger app/API size limit than Free. ---
+// --- Static Web App - REDUCED FOR COST (day-24): Free tier, same as
+// dev, instead of Standard. In reality this would be:
+//   staticWebAppSkuTier = 'Standard'
+// (custom domains with managed certificates, larger app/API size limit).
 param staticWebAppName = 'swa-quotesui-prod'
-param staticWebAppSkuTier = 'Standard'
+param staticWebAppSkuTier = 'Free'
 param staticWebAppRepositoryUrl = 'https://github.com/thinkbridge-thinkschool/Thinkschool_Ujjwal'
 param staticWebAppBranch = 'main'
 
