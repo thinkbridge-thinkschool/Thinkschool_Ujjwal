@@ -54,19 +54,22 @@ param staticWebAppSkuTier = 'Free'
 param staticWebAppRepositoryUrl = 'https://github.com/thinkbridge-thinkschool/Thinkschool_Ujjwal'
 param staticWebAppBranch = 'day17-deploy'
 
-// --- Secrets: never literals, never defaults. Pulled from an existing
-// Key Vault via getSecret() - the vault itself is NOT created by this
-// Bicep (see README.md's "Secrets" section) and must already exist with
-// these three secret names populated before this file can be used to
-// deploy for real. Replace <subscription-id> with the target
-// subscription's ID and kv-quoteshub-dev with the real vault name before
-// use. ---
-param jwtKey = getSecret('<subscription-id>', 'rg-thinkschool-day17', 'kv-quoteshub-dev', 'jwt-key')
-param sqlAdministratorPassword = getSecret('<subscription-id>', 'rg-thinkschool-day17', 'kv-quoteshub-dev', 'sql-admin-password')
+// --- Key Vault - created day-25 (rg-thinkschool-day17). Real name, not
+// a placeholder: this vault exists. The JWT signing key is NOT sourced
+// through this file at all any more - appservice.bicep builds a
+// @Microsoft.KeyVault(SecretUri=...) reference directly from this
+// vault's URI, and the App Service resolves it at runtime via its own
+// managed identity. See day-25/README.md. ---
+param keyVaultName = 'kv-quoteshub-dev'
+
+// --- Secrets: never literals, never defaults. Pulled from the vault
+// above via getSecret() - real subscription ID, real vault, real secret
+// names populated day-25. ---
+param sqlAdministratorPassword = getSecret('4137ee92-b41e-4d41-a149-6aa8a5a08aba', 'rg-thinkschool-day17', 'kv-quoteshub-dev', 'sql-admin-password')
 // Service Bus is not adopted by the app yet (enableServiceBusIntegration
 // is false above), but the parameter is still required - an empty
 // secret is fine here, a literal empty string in this file is not.
-param serviceBusConnectionString = getSecret('<subscription-id>', 'rg-thinkschool-day17', 'kv-quoteshub-dev', 'servicebus-connection-string')
+param serviceBusConnectionString = getSecret('4137ee92-b41e-4d41-a149-6aa8a5a08aba', 'rg-thinkschool-day17', 'kv-quoteshub-dev', 'servicebus-connection-string')
 
 // staticWebAppRepositoryToken is left unassigned: it defaults to '' in
 // main.bicep and is only needed the first time this Static Web App is

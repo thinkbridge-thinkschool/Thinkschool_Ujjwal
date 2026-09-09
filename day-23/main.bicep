@@ -27,9 +27,6 @@ param dotnetVersion string = '10.0'
 param aspnetCoreEnvironment string
 @description('Entra (Azure AD) application/client ID the API validates bearer tokens against. Not a secret.')
 param entraAudience string
-@description('JWT signing key. Secure - supplied at deploy time, never a literal or default.')
-@secure()
-param jwtKey string
 @description('Whether to wire a Service Bus connection string into the API. False until the app actually adopts real Azure Service Bus - see README. Tied to deployServiceBus: the app setting only makes sense if the namespace actually exists.')
 param enableServiceBusIntegration bool = false
 
@@ -75,6 +72,10 @@ param serviceBusTopicName string = 'quote-created'
 @description('Service Bus connection string. Always required (even as an empty string) when enableServiceBusIntegration is false - never a literal or default. Secure - supplied at deploy time.')
 @secure()
 param serviceBusConnectionString string
+
+// --- Key Vault (runtime secrets) ---
+@description('Name of the Key Vault holding secrets the API reads at runtime (currently just the JWT signing key) - must be globally unique.')
+param keyVaultName string
 
 // --- Static Web App (the frontend) ---
 @description('Static Web App name - must be globally unique.')
@@ -139,10 +140,20 @@ module staticWebApp 'modules/staticwebapp.bicep' = {
   }
 }
 
-// The API's CORS origin and DB connection string both come from sibling
-// modules' outputs (the SWA's real hostname, the SQL server's real FQDN)
-// rather than being duplicated as separate literal parameters - one
-// source of truth for each, no risk of the two drifting apart.
+module keyVault 'modules/keyvault.bicep' = {
+  name: 'keyvault-deployment'
+  params: {
+    vaultName: keyVaultName
+    location: location
+    tags: tags
+  }
+}
+
+// The API's CORS origin, DB connection string, and Key Vault URI all
+// come from sibling modules' outputs (the SWA's real hostname, the SQL
+// server's real FQDN, the vault's real URI) rather than being duplicated
+// as separate literal parameters - one source of truth for each, no
+// risk of the two drifting apart.
 module appService 'modules/appservice.bicep' = {
   name: 'appservice-deployment'
   params: {
@@ -157,7 +168,7 @@ module appService 'modules/appservice.bicep' = {
     aspnetCoreEnvironment: aspnetCoreEnvironment
     corsAllowedOrigin: 'https://${staticWebApp.outputs.defaultHostname}'
     entraAudience: entraAudience
-    jwtKey: jwtKey
+    keyVaultUri: keyVault.outputs.vaultUri
     sqlConnectionString: empty(sqlConnectionStringOverride)
       ? 'Server=tcp:${sql.outputs.serverFqdn},1433;Database=${sqlDatabaseName};User Id=${sqlAdministratorLogin};Password=${sqlAdministratorPassword};Encrypt=True;TrustServerCertificate=False;'
       : sqlConnectionStringOverride
@@ -166,7 +177,20 @@ module appService 'modules/appservice.bicep' = {
   }
 }
 
+// A separate module, not an inline resource here - see
+// keyvaultaccess.bicep's own comment for why (avoiding a circular
+// module dependency between the vault and the App Service).
+module keyVaultAccess 'modules/keyvaultaccess.bicep' = {
+  name: 'keyvault-access-deployment'
+  params: {
+    vaultName: keyVault.outputs.vaultName
+    principalId: appService.outputs.principalId
+  }
+}
+
 output webAppHostName string = appService.outputs.webAppHostName
 output staticWebAppHostName string = staticWebApp.outputs.defaultHostname
 output sqlServerFqdn string = sql.outputs.serverFqdn
 output serviceBusNamespaceName string = deployServiceBus ? serviceBus!.outputs.namespaceName : ''
+output appServicePrincipalId string = appService.outputs.principalId
+output keyVaultName string = keyVault.outputs.vaultName

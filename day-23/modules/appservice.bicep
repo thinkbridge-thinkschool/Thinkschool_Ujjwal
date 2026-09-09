@@ -32,9 +32,11 @@ param corsAllowedOrigin string
 @description('Entra (Azure AD) application/client ID the API validates bearer tokens against. Not a secret - already public in the app\'s own appsettings.json.')
 param entraAudience string
 
-@description('JWT signing key. Secure - supplied at deploy time (Key Vault reference or --parameters), never a literal or default.')
-@secure()
-param jwtKey string
+@description('Base URI of the Key Vault holding secrets this app reads at runtime, e.g. https://kv-quoteshub-dev.vault.azure.net/. Used only to build a Key Vault reference string for an app setting - never a secret value itself, and the JWT signing key never passes through this template as a parameter at all (day-25/README.md).')
+param keyVaultUri string
+
+@description('Name of the secret in Key Vault holding the JWT signing key.')
+param jwtKeySecretName string = 'jwt-key'
 
 @description('SQL Server connection string for QuotesDbContext. Secure - supplied at deploy time, never a literal or default.')
 @secure()
@@ -76,6 +78,14 @@ resource webApp 'Microsoft.Web/sites@2023-12-01' = {
   location: location
   tags: tags
   kind: 'app,linux'
+  // System-assigned identity - what the Key Vault Secrets User role
+  // assignment in main.bicep grants access to. Nothing else in this
+  // template depends on it yet (day-25/README.md covers what SQL/Service
+  // Bus access via this same identity would need, deliberately not built
+  // here).
+  identity: {
+    type: 'SystemAssigned'
+  }
   properties: {
     serverFarmId: plan.id
     httpsOnly: true
@@ -89,7 +99,10 @@ resource webApp 'Microsoft.Web/sites@2023-12-01' = {
           { name: 'ASPNETCORE_ENVIRONMENT', value: aspnetCoreEnvironment }
           { name: 'Cors__AllowedOrigin', value: corsAllowedOrigin }
           { name: 'Entra__Audience', value: entraAudience }
-          { name: 'Jwt__Key', value: jwtKey }
+          // Unversioned reference - App Service resolves this to
+          // whatever the secret's CURRENT version is on every read, so
+          // rotating the key in Key Vault later needs no redeploy here.
+          { name: 'Jwt__Key', value: '@Microsoft.KeyVault(SecretUri=${keyVaultUri}secrets/${jwtKeySecretName}/)' }
           { name: 'ConnectionStrings__Default', value: sqlConnectionString }
         ],
         enableServiceBusIntegration ? [{ name: 'ServiceBus__ConnectionString', value: serviceBusConnectionString }] : []
@@ -100,3 +113,4 @@ resource webApp 'Microsoft.Web/sites@2023-12-01' = {
 
 output webAppName string = webApp.name
 output webAppHostName string = webApp.properties.defaultHostName
+output principalId string = webApp.identity.principalId
