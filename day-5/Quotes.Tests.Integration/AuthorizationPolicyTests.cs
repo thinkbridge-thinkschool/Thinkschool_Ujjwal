@@ -190,7 +190,7 @@ public class AuthorizationPolicyTests : IDisposable
     {
         var client = CreateClient(_factory.MintToken(Guid.NewGuid().ToString(), "quotes.write"));
 
-        var response = await client.PostAsJsonAsync("/api/quotes", new { author = "A", text = "T" });
+        var response = await client.PostAsJsonAsync("/api/quotes", new { author = "Plato", text = "Know thyself" });
 
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
     }
@@ -200,7 +200,7 @@ public class AuthorizationPolicyTests : IDisposable
     {
         var client = CreateClient(_factory.MintToken(Guid.NewGuid().ToString(), "quotes.read"));
 
-        var response = await client.PostAsJsonAsync("/api/quotes", new { author = "A", text = "T" });
+        var response = await client.PostAsJsonAsync("/api/quotes", new { author = "Plato", text = "Know thyself" });
 
         Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
     }
@@ -210,7 +210,7 @@ public class AuthorizationPolicyTests : IDisposable
     {
         var client = CreateClient();
 
-        var response = await client.PostAsJsonAsync("/api/quotes", new { author = "A", text = "T" });
+        var response = await client.PostAsJsonAsync("/api/quotes", new { author = "Plato", text = "Know thyself" });
 
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
@@ -220,7 +220,7 @@ public class AuthorizationPolicyTests : IDisposable
     {
         var client = CreateClient(_factory.MintExpiredToken(Guid.NewGuid().ToString(), "quotes.write"));
 
-        var response = await client.PostAsJsonAsync("/api/quotes", new { author = "A", text = "T" });
+        var response = await client.PostAsJsonAsync("/api/quotes", new { author = "Plato", text = "Know thyself" });
 
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }

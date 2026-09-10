@@ -24,16 +24,20 @@ public static class InfrastructureExtensions
         services.AddSingleton<DbHitCounterInterceptor>();
         services.AddSingleton<QuoteQueryCounter>();
 
-        // SQL Server everywhere - local dev and production both. Local dev
-        // connects to a dedicated container (ConnectionStrings:Default in
-        // user-secrets, never appsettings.json); production points at
-        // Azure SQL via the same setting, supplied as an App Service
-        // Application Setting. Kept single-provider deliberately: EF Core
-        // migrations are scanned per DbContext, not per provider, so a
-        // second provider's migrations living in this same project would
-        // get applied here too and fail against the wrong engine.
+        // Reverted to SQLite for day-26's redeploy, deliberately: the
+        // SQL Server cutover this project has been building toward
+        // (day-24/day-25) is still incomplete - the EF Core migrations in
+        // this project were generated against the Sqlite provider and
+        // have never been regenerated for SQL Server, so running them
+        // against the empty quoteshub database on sql-quotesapi-thinkschool
+        // would very likely fail with Sqlite-specific DDL that SQL Server
+        // rejects. Day 26's actual scope is OpenTelemetry/Application
+        // Insights, not finishing that migration, so this stays on SQLite
+        // (matching main.bicep's sqlConnectionStringOverride, which is
+        // still active) rather than risk crashing the live app on a
+        // change unrelated to today's task. See day-26/README.md.
         services.AddDbContext<QuotesDbContext>((sp, options) =>
-            options.UseSqlServer(config.GetConnectionString("Default"))
+            options.UseSqlite(config.GetConnectionString("Default") ?? "Data Source=quotes.db")
                    .AddInterceptors(sp.GetRequiredService<DbHitCounterInterceptor>()));
 
         services.AddScoped<IQuoteRepository, QuoteRepository>();
@@ -44,11 +48,12 @@ public static class InfrastructureExtensions
         // Day 19: Service Bus replaces Day 18's in-memory Channel<T>
         // queue - see day-19/README.md for why. ConnectionString comes
         // from user-secrets/environment only, never appsettings.json;
-        // this repo is public.
+        // this repo is public. No .ValidateDataAnnotations()/
+        // ValidateOnStart() any more - see ServiceBusOptions.cs for why
+        // that used to crash the app at startup in this exact
+        // environment.
         services.AddOptions<ServiceBusOptions>()
-            .Bind(config.GetSection(ServiceBusOptions.SectionName))
-            .ValidateDataAnnotations()
-            .ValidateOnStart();
+            .Bind(config.GetSection(ServiceBusOptions.SectionName));
 
         // ServiceBusClient (and senders created from it) are meant to be
         // long-lived and reused, not created per request - a singleton.

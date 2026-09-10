@@ -14,6 +14,7 @@ using QuotesApi.Authorization;
 using Polly.CircuitBreaker;
 using Polly.RateLimiting;
 using Polly.Timeout;
+using System.Diagnostics;
 using System.Security.Claims;
 using System.Text.Json;
 using System.Text.RegularExpressions;
@@ -285,6 +286,10 @@ auth.MapPost("/refresh", async (RefreshRequest request, QuotesDbContext db, IJwt
                 MessageId = $"quote-created:{created.Id}",
                 OccurredAt = message.CreatedAtUtc,
                 ProcessedAt = null,
+                // Captured here, not derived later - Activity.Current is
+                // only meaningful on this request's own thread/context,
+                // right now. See OutboxRelay.cs for the other half.
+                TraceParent = Activity.Current?.Id,
             });
             await db.SaveChangesAsync(ct);
 

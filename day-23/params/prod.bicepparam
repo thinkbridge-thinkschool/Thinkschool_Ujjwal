@@ -67,15 +67,27 @@ param staticWebAppSkuTier = 'Free'
 param staticWebAppRepositoryUrl = 'https://github.com/thinkbridge-thinkschool/Thinkschool_Ujjwal'
 param staticWebAppBranch = 'main'
 
+// --- Key Vault - NOT created (day-25 only stood up kv-quoteshub-dev;
+// prod's vault, and prod itself, was out of that task's scope). This
+// name is kept as a placeholder so this file stays structurally valid
+// against main.bicep - deploying prod for real needs kv-quoteshub-prod
+// actually created first, same as dev needed kv-quoteshub-dev. ---
+param keyVaultName = 'kv-quoteshub-prod'
+
+// --- Application Insights - NOT created for prod (day-26 scope was
+// dev's live app only). Kept structurally valid against main.bicep. ---
+param logAnalyticsWorkspaceName = 'law-quoteshub-prod'
+param appInsightsName = 'appi-quoteshub-prod'
+param logAnalyticsRetentionInDays = 30
+
 // --- Secrets: never literals, never defaults. Pulled from an existing
 // Key Vault via getSecret() - the vault itself is NOT created by this
 // Bicep (see README.md's "Secrets" section) and must already exist with
-// these three secret names populated before this file can be used to
-// deploy for real. Replace <subscription-id> with the target
-// subscription's ID and kv-quoteshub-prod with the real vault name
+// these secret names populated before this file can be used to deploy
+// for real. Replace <subscription-id> with the target subscription's ID
 // before use. A production vault should not be the same vault dev
-// secrets live in. ---
-param jwtKey = getSecret('<subscription-id>', 'rg-thinkschool-prod', 'kv-quoteshub-prod', 'jwt-key')
+// secrets live in - note this is a still-unpopulated placeholder vault
+// name, unlike dev's, which now points at a real, existing vault. ---
 param sqlAdministratorPassword = getSecret('<subscription-id>', 'rg-thinkschool-prod', 'kv-quoteshub-prod', 'sql-admin-password')
 param serviceBusConnectionString = getSecret('<subscription-id>', 'rg-thinkschool-prod', 'kv-quoteshub-prod', 'servicebus-connection-string')
 

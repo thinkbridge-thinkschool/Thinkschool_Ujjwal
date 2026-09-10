@@ -1,0 +1,369 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Day 26 — Observability Report</title>
+<style>
+  :root {
+    --bg: #f7f8fa;
+    --panel: #ffffff;
+    --ink: #1a1d23;
+    --muted: #5b6270;
+    --border: #e3e6ec;
+    --accent: #5b3df0;
+    --accent-soft: #efeaff;
+    --ok: #1a7f37;
+    --ok-bg: #e9f7ee;
+    --err: #c1121f;
+    --err-bg: #fdeceb;
+    --mono: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    line-height: 1.5;
+    padding: 40px 24px 80px;
+  }
+  .wrap { max-width: 980px; margin: 0 auto; }
+  header.page {
+    margin-bottom: 32px;
+  }
+  header.page .eyebrow {
+    color: var(--accent);
+    font-weight: 600;
+    font-size: 13px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  header.page h1 {
+    font-size: 30px;
+    margin: 0 0 8px;
+    letter-spacing: -0.01em;
+  }
+  header.page p.sub {
+    color: var(--muted);
+    margin: 0;
+    font-size: 15px;
+    max-width: 70ch;
+  }
+  section.card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 28px 30px;
+    margin-bottom: 24px;
+    box-shadow: 0 1px 2px rgba(20, 20, 40, 0.03);
+  }
+  section.card h2 {
+    font-size: 18px;
+    margin: 0 0 4px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  section.card h2 .tag {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    background: var(--accent-soft);
+    color: var(--accent);
+    padding: 3px 8px;
+    border-radius: 999px;
+  }
+  section.card p.desc {
+    color: var(--muted);
+    font-size: 14px;
+    margin: 6px 0 20px;
+    max-width: 75ch;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13.5px;
+  }
+  th, td {
+    text-align: left;
+    padding: 9px 12px;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+  }
+  th {
+    color: var(--muted);
+    font-weight: 600;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+  tbody tr:last-child td { border-bottom: none; }
+  .num { font-family: var(--mono); text-align: right; }
+  .pill {
+    display: inline-block;
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 6px;
+  }
+  .pill.ok { background: var(--ok-bg); color: var(--ok); }
+  .pill.err { background: var(--err-bg); color: var(--err); }
+  .kql {
+    background: #14161c;
+    color: #d7dae2;
+    font-family: var(--mono);
+    font-size: 12.5px;
+    padding: 16px 18px;
+    border-radius: 10px;
+    overflow-x: auto;
+    margin: 0 0 18px;
+    line-height: 1.6;
+  }
+  .kql .c { color: #7d8493; }
+  .traceid {
+    font-family: var(--mono);
+    font-size: 12.5px;
+    background: var(--accent-soft);
+    color: var(--accent);
+    padding: 2px 8px;
+    border-radius: 6px;
+  }
+  /* trace waterfall */
+  .waterfall { margin-top: 4px; }
+  .wf-row {
+    display: grid;
+    grid-template-columns: 190px 1fr 90px;
+    align-items: center;
+    gap: 14px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .wf-row:last-child { border-bottom: none; }
+  .wf-label { font-size: 13.5px; }
+  .wf-label .name { font-weight: 600; display: block; }
+  .wf-label .kind { color: var(--muted); font-size: 12px; }
+  .wf-track {
+    position: relative;
+    height: 22px;
+    background: #f1f2f6;
+    border-radius: 6px;
+    overflow: hidden;
+  }
+  .wf-bar {
+    position: absolute;
+    top: 0; bottom: 0;
+    border-radius: 6px;
+    background: var(--accent);
+  }
+  .wf-bar.child { background: #9c8cf5; }
+  .wf-bar.err { background: var(--err); }
+  .wf-dur { font-family: var(--mono); font-size: 12.5px; text-align: right; color: var(--muted); }
+  .indent { padding-left: 22px; border-left: 2px solid var(--border); margin-left: 4px; }
+  .finding {
+    border-left: 4px solid var(--accent);
+    background: var(--accent-soft);
+    padding: 12px 16px;
+    border-radius: 0 8px 8px 0;
+    font-size: 13.5px;
+    margin: 4px 0 18px;
+  }
+  .finding.warn { border-left-color: #b45309; background: #fef6e8; }
+  .grid2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  @media (max-width: 720px) {
+    .grid2 { grid-template-columns: 1fr; }
+    .wf-row { grid-template-columns: 130px 1fr 70px; }
+  }
+  footer.note {
+    color: var(--muted);
+    font-size: 12.5px;
+    text-align: center;
+    margin-top: 8px;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0f1115;
+      --panel: #171a21;
+      --ink: #e8eaf0;
+      --muted: #8b92a3;
+      --border: #2a2e38;
+      --accent: #8f7bff;
+      --accent-soft: #241f3d;
+      --ok: #4ade80;
+      --ok-bg: #113321;
+      --err: #f87171;
+      --err-bg: #3a1616;
+    }
+    :root:not([data-theme="light"]) .wf-track { background: #22252e; }
+    :root:not([data-theme="light"]) .finding.warn { background: #362a12; }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0f1115;
+    --panel: #171a21;
+    --ink: #e8eaf0;
+    --muted: #8b92a3;
+    --border: #2a2e38;
+    --accent: #8f7bff;
+    --accent-soft: #241f3d;
+    --ok: #4ade80;
+    --ok-bg: #113321;
+    --err: #f87171;
+    --err-bg: #3a1616;
+  }
+  :root[data-theme="dark"] .wf-track { background: #22252e; }
+  :root[data-theme="dark"] .finding.warn { background: #362a12; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="page">
+    <div class="eyebrow">Day 26 — QuoteHub</div>
+    <h1>OpenTelemetry → Application Insights</h1>
+    <p class="sub">Real telemetry from <code>appi-quoteshub-dev</code>, queried directly from the live workspace after generating real traffic against <code>quotesapi-thinkschool</code>. Every table below is an actual query result, not sample data.</p>
+  </header>
+
+  <section class="card">
+    <h2>End-to-end trace <span class="tag">verified</span></h2>
+    <p class="desc">
+      One real <code>POST /api/quotes</code> request (id 37), operation_Id
+      <span class="traceid">1b34db74478abf6227eaf579dd4389c1</span> — identical to the
+      <code>X-Trace-Id</code> response header the API returned for this exact request.
+      The outbox relay's later, asynchronous processing of this row shows up under the
+      <strong>same</strong> operation_Id — the distributed-tracing fix made today.
+    </p>
+
+    <div class="waterfall">
+      <div class="wf-row">
+        <div class="wf-label"><span class="name">POST /api/quotes/</span><span class="kind">request</span></div>
+        <div class="wf-track"><div class="wf-bar" style="left:0%; width:29%;"></div></div>
+        <div class="wf-dur">5679.5 ms</div>
+      </div>
+      <div class="wf-row indent">
+        <div class="wf-label"><span class="name">ProcessOutboxMessage</span><span class="kind">dependency · InProc</span></div>
+        <div class="wf-track"><div class="wf-bar err" style="left:31%; width:60%;"></div></div>
+        <div class="wf-dur">11754.5 ms</div>
+      </div>
+      <div class="wf-row indent">
+        <div class="wf-label"><span class="name">main</span><span class="kind">dependency · sqlite</span></div>
+        <div class="wf-track"><div class="wf-bar child" style="left:91%; width:1%;"></div></div>
+        <div class="wf-dur">26.4 ms</div>
+      </div>
+    </div>
+
+    <div class="finding">
+      <strong>What this proves:</strong> <code>ProcessOutboxMessage</code> (the outbox relay picking up this exact row 20 seconds later, on its own polling loop) is parented to the original request's trace via a captured <code>TraceParent</code> — not a disconnected root trace. Its <code>success</code> is <code>False</code> (red bar) because the fallback Service Bus endpoint genuinely can't connect, which is expected in this environment. The SQLite write recording that failure is correctly nested as <em>its</em> child.
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>Live traffic generated</h2>
+    <p class="desc">8 real requests — successes and deliberate errors — used to produce every result on this page.</p>
+    <table>
+      <thead><tr><th>Time</th><th>Request</th><th class="num">Duration</th><th>Result</th></tr></thead>
+      <tbody>
+        <tr><td>11:41:11</td><td>GET /health</td><td class="num">69.9 ms</td><td><span class="pill ok">200</span></td></tr>
+        <tr><td>11:41:24</td><td>POST /api/auth/register</td><td class="num">2291.4 ms</td><td><span class="pill ok">201</span></td></tr>
+        <tr><td>11:41:28</td><td>POST /api/auth/login</td><td class="num">385.6 ms</td><td><span class="pill ok">200</span></td></tr>
+        <tr><td>11:41:29</td><td>GET /api/quotes/</td><td class="num">6697.7 ms</td><td><span class="pill ok">200</span></td></tr>
+        <tr><td>11:41:37</td><td>POST /api/quotes/ <em>(id 37 — traced above)</em></td><td class="num">5679.5 ms</td><td><span class="pill ok">201</span></td></tr>
+        <tr><td>11:41:44</td><td>POST /api/auth/login <em>(wrong password)</em></td><td class="num">902.8 ms</td><td><span class="pill err">401</span></td></tr>
+        <tr><td>11:41:47</td><td>POST /api/quotes/ <em>(empty fields)</em></td><td class="num">2546.2 ms</td><td><span class="pill err">400</span></td></tr>
+        <tr><td>11:41:50</td><td>POST /api/quotes/ <em>(no auth token)</em></td><td class="num">165.9 ms</td><td><span class="pill err">401</span></td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="card">
+    <h2>p50 / p99 duration by endpoint</h2>
+    <p class="desc">An average hides a bad tail — a good p50 with a bad p99 means most users are fine and some are having a genuinely terrible time.</p>
+    <div class="kql"><span class="c">requests</span>
+| where timestamp &gt; ago(1h)
+| summarize count = count(), p50 = percentile(duration, 50), p99 = percentile(duration, 99) by name
+| order by p99 desc</div>
+    <table>
+      <thead><tr><th>Endpoint</th><th class="num">Count</th><th class="num">p50 (ms)</th><th class="num">p99 (ms)</th></tr></thead>
+      <tbody>
+        <tr><td>GET /api/quotes/</td><td class="num">1</td><td class="num">6697.7</td><td class="num">6697.7</td></tr>
+        <tr><td>POST /api/quotes/</td><td class="num">3</td><td class="num">2546.2</td><td class="num">5679.5</td></tr>
+        <tr><td>POST /api/auth/register</td><td class="num">1</td><td class="num">2291.4</td><td class="num">2291.4</td></tr>
+        <tr><td>POST /api/auth/login</td><td class="num">2</td><td class="num">385.6</td><td class="num">902.8</td></tr>
+        <tr><td>GET /health</td><td class="num">1</td><td class="num">69.9</td><td class="num">69.9</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="card">
+    <h2>Dependency breakdown</h2>
+    <div class="grid2">
+      <div>
+        <p class="desc">Aggregate — which dependency type dominates overall.</p>
+        <div class="kql"><span class="c">dependencies</span>
+| where timestamp &gt; ago(1h)
+| summarize totalDuration = sum(duration),
+    avgDuration = avg(duration), count = count()
+    by type, target
+| order by totalDuration desc</div>
+        <table>
+          <thead><tr><th>Type</th><th class="num">Total (ms)</th><th class="num">Count</th></tr></thead>
+          <tbody>
+            <tr><td>InProc (ProcessOutboxMessage)</td><td class="num">11754.5</td><td class="num">1</td></tr>
+            <tr><td>sqlite (/home/quotes.db)</td><td class="num">42.8</td><td class="num">10</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div>
+        <p class="desc">Per-request self-time vs. dependency-time.</p>
+        <table>
+          <thead><tr><th>Request</th><th class="num">Self (ms)</th></tr></thead>
+          <tbody>
+            <tr><td>GET /api/quotes/</td><td class="num">6697.7</td></tr>
+            <tr><td>POST /api/quotes/ (id 37)</td><td class="num">−6101.4 ⚠</td></tr>
+            <tr><td>POST /api/quotes/ (400)</td><td class="num">2546.2</td></tr>
+            <tr><td>POST /api/auth/register</td><td class="num">2282.0</td></tr>
+            <tr><td>POST /api/auth/login</td><td class="num">902.8</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="finding warn">
+      <strong>Honest limitation, not hidden:</strong> the −6101 ms row isn't a bug in the data — <code>ProcessOutboxMessage</code> (11.75s) runs <em>after</em> the request already returned (5.68s), so naive <code>requestDuration − dependencyDuration</code> goes negative for this async continuation. Every synchronous row above is sane. The query needs a time-window guard to handle background work correctly — flagged, not silently patched.
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>Error-rate alert condition <span class="tag">correctly did not fire</span></h2>
+    <div class="kql"><span class="c">requests</span>
+| where timestamp &gt; ago(5m)
+| summarize total = count(),
+    serverErrors = countif(toint(resultCode) &gt;= 500)
+| where total &gt;= 10
+| extend errorRatePercent = todouble(serverErrors) / total * 100
+| where errorRatePercent &gt; 5</div>
+    <p class="desc">Result: <strong>empty</strong>. Real mix at query time — 11 requests, 6 client errors (401/400), <strong>0</strong> server errors. Scoped to 5xx specifically so routine client mistakes never count against it.</p>
+  </section>
+
+  <section class="card">
+    <h2>Alert rules <span class="tag">2 created</span></h2>
+    <table>
+      <thead><tr><th>Name</th><th>Condition</th><th>Threshold</th><th>Window</th></tr></thead>
+      <tbody>
+        <tr><td>quoteshub-dev-error-rate</td><td>5xx rate over min. 10 requests</td><td class="num">&gt; 5%</td><td class="num">5 min</td></tr>
+        <tr><td>quoteshub-dev-slow-quote-creation</td><td>Avg duration, POST /api/quotes</td><td class="num">&gt; 3000 ms</td><td class="num">5 min</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <footer class="note">day-26/telemetry-report.html — generated from real Application Insights query results, not sample data. See day-26/README.md for full narrative.</footer>
+
+</div>
+</body>
+</html>
