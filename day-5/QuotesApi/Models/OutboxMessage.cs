@@ -39,4 +39,15 @@ public class OutboxMessage
     // next attempt out, so a failing row is retried with growing delay
     // instead of being hammered every poll - see OutboxRelay.BackoffFor.
     public DateTimeOffset? NextAttemptAt { get; set; }
+
+    // The W3C traceparent string (Activity.Current?.Id) captured at the
+    // moment this row was written - day-26. OutboxRelay runs on its own
+    // polling loop, not in response to a call, so it has no ambient
+    // Activity of its own; without this, its processing of this row
+    // would start a brand-new, disconnected trace with no link back to
+    // the request that created it. Nullable because rows written before
+    // this column existed have none, and processing must not fail on a
+    // null value - it just means that older row's trace can't be
+    // stitched, not that this row can't be processed.
+    public string? TraceParent { get; set; }
 }

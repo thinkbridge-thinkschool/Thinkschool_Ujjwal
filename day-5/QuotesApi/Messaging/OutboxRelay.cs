@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using QuotesApi.Data;
@@ -27,6 +28,16 @@ public class OutboxRelay : BackgroundService
     private static readonly TimeSpan PollInterval = TimeSpan.FromSeconds(5);
     private const int BatchSize = 20;
     private const int MaxAttempts = 5;
+
+    // day-26: this relay runs on its own polling loop, not in response to
+    // a call, so ASP.NET Core's instrumentation never creates an Activity
+    // for it - without explicitly starting one here (parented to the
+    // TraceParent captured when the row was written), this work would be
+    // invisible in traces entirely, or worse, show up as its own
+    // disconnected root trace with no link back to the request that
+    // created the row. Must be registered via .AddSource(...) in
+    // TracingExtensions.cs or nothing actually exports these.
+    private static readonly ActivitySource ActivitySource = new("QuotesApi.OutboxRelay");
 
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly ILogger<OutboxRelay> _logger;
@@ -110,6 +121,8 @@ public class OutboxRelay : BackgroundService
         {
             if (ct.IsCancellationRequested) break;
 
+            using var activity = StartActivityForRow(row);
+
             try
             {
                 var message = JsonSerializer.Deserialize<QuoteCreatedMessage>(row.Payload)
@@ -134,6 +147,8 @@ public class OutboxRelay : BackgroundService
             }
             catch (Exception ex)
             {
+                activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
+
                 row.AttemptCount++;
                 row.LastError = ex.Message;
                 row.NextAttemptAt = DateTimeOffset.UtcNow + BackoffFor(row.AttemptCount);
@@ -156,4 +171,20 @@ public class OutboxRelay : BackgroundService
     // and stops being retried before a 6th delay would ever apply).
     private static TimeSpan BackoffFor(int attempt) =>
         TimeSpan.FromSeconds(Math.Min(60, Math.Pow(2, attempt)));
+
+    // Re-parents this row's processing under the request that created it,
+    // if that request's trace id was captured (older rows, written before
+    // this column existed, have none - they just get an unparented
+    // activity, same as before day-26). ActivityContext.TryParse expects
+    // a W3C traceparent string; Activity.Current?.Id (captured in
+    // EndpointExtensions.cs) is exactly that format.
+    private static Activity? StartActivityForRow(OutboxMessage row)
+    {
+        if (row.TraceParent is not null && ActivityContext.TryParse(row.TraceParent, null, out var parentContext))
+        {
+            return ActivitySource.StartActivity("ProcessOutboxMessage", ActivityKind.Internal, parentContext);
+        }
+
+        return ActivitySource.StartActivity("ProcessOutboxMessage");
+    }
 }

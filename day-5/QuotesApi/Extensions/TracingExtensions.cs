@@ -18,7 +18,11 @@ public static class TracingExtensions
             {
                 tracing
                     .AddAspNetCoreInstrumentation()
-                    .AddEntityFrameworkCoreInstrumentation();
+                    .AddEntityFrameworkCoreInstrumentation()
+                    // day-26: OutboxRelay's custom ActivitySource - without
+                    // this, the Activities it starts (see OutboxRelay.cs)
+                    // are created but never sampled/exported by anything.
+                    .AddSource("QuotesApi.OutboxRelay");
 
                 // Gated by config rather than IsDevelopment() so tests (which run under
                 // Development too) can silence it via Tracing:ConsoleExporterEnabled

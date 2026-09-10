@@ -45,12 +45,14 @@ Service Bus can't get cheaper than Standard for either environment — Basic doe
 
 ## Secrets
 
-Three values are marked `@secure()` everywhere they appear (`main.bicep` and the modules that consume them) and have **no default**: `jwtKey`, `sqlAdministratorPassword`, `serviceBusConnectionString`. None of them, and no other credential, appears as a literal anywhere in this folder — confirmed by grepping the whole folder for password/secret/connection-string-shaped text and finding nothing (see Verify below).
+**Superseded by day-25 for the JWT key specifically:** `jwtKey` is no longer a Bicep parameter at all — `day-25/README.md` covers moving it to a native Key Vault reference (`@Microsoft.KeyVault(SecretUri=...)`) resolved by the App Service's own managed identity at runtime, never passing through a template parameter. The rest of this section describes `sqlAdministratorPassword` and `serviceBusConnectionString`, which still work exactly as follows.
 
-Both `.bicepparam` files source these three via `getSecret()`:
+Two values are marked `@secure()` everywhere they appear (`main.bicep` and the modules that consume them) and have **no default**: `sqlAdministratorPassword`, `serviceBusConnectionString`. Neither, and no other credential, appears as a literal anywhere in this folder — confirmed by grepping the whole folder for password/secret/connection-string-shaped text and finding nothing (see Verify below).
+
+Both `.bicepparam` files source these via `getSecret()`:
 
 ```bicep
-param jwtKey = getSecret('<subscription-id>', 'rg-thinkschool-day17', 'kv-quoteshub-dev', 'jwt-key')
+param sqlAdministratorPassword = getSecret('<subscription-id>', 'rg-thinkschool-day17', 'kv-quoteshub-dev', 'sql-admin-password')
 ```
 
 This compiles to a standard ARM Key Vault reference (`{"reference": {"keyVault": {"id": ...}, "secretName": "..."}}`) — confirmed by inspecting `az bicep build-params` output directly. **The vault itself is not created by this Bicep** — creating one was out of scope for a task whose hard constraint is "do not create any Azure resource," and a real one doesn't exist yet in this subscription. Before either `.bicepparam` file can deploy for real:

@@ -67,5 +67,21 @@ resource statsSubscription 'Microsoft.ServiceBus/namespaces/topics/subscriptions
   }
 }
 
+// Send+Listen only, not the namespace's default RootManageSharedAccessKey
+// (which also grants Manage - create/delete topics, etc.). The app only
+// ever needs to publish and receive; least privilege for this
+// credential the same way Key Vault Secrets User is for the JWT key.
+resource sendListenRule 'Microsoft.ServiceBus/namespaces/AuthorizationRules@2022-10-01-preview' = {
+  parent: namespace
+  name: 'SendListen'
+  properties: {
+    rights: [
+      'Send'
+      'Listen'
+    ]
+  }
+}
+
 output namespaceName string = namespace.name
 output serviceBusEndpoint string = namespace.properties.serviceBusEndpoint
+output connectionString string = sendListenRule.listKeys().primaryConnectionString
