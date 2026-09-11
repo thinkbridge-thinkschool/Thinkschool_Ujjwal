@@ -52,6 +52,9 @@ param serviceBusConnectionString string
 @description('Application Insights connection string. Not treated as a secret (Microsoft documents this value as not sensitive), but still sourced from the appinsights.bicep module output - never a literal in this repo. Empty string disables telemetry entirely (day-5/QuotesApi only registers the Azure Monitor exporter when this is non-empty).')
 param applicationInsightsConnectionString string = ''
 
+@description('Subnet ID for regional VNet integration (from network.bicep). Empty by default - the current F1 tier cannot use VNet integration at all (Basic/B1 or above required), so this stays unset until the plan is upgraded. See day-27/README.md.')
+param virtualNetworkSubnetId string = ''
+
 @description('Tags applied to the plan and the web app.')
 param tags object = {}
 
@@ -91,6 +94,11 @@ resource webApp 'Microsoft.Web/sites@2023-12-01' = {
   }
   properties: {
     serverFarmId: plan.id
+    // Only set when non-empty - omitting this property entirely (rather
+    // than sending an empty string) is what keeps a plan that can't use
+    // VNet integration (F1, today) from erroring on a property it
+    // doesn't support.
+    virtualNetworkSubnetId: empty(virtualNetworkSubnetId) ? null : virtualNetworkSubnetId
     httpsOnly: true
     siteConfig: {
       linuxFxVersion: 'DOTNETCORE|${dotnetVersion}'

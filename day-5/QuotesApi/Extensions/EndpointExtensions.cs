@@ -28,7 +28,11 @@ public static class EndpointExtensions
     {
         var group = app.MapGroup("/api/quotes");
 
-        var auth = app.MapGroup("/api/auth");
+        // day-27: rate limited as a whole group (register, login, refresh
+        // all included) - refresh is token-gated but still worth
+        // covering, since a stolen/guessed refresh token shouldn't get
+        // unlimited rotation attempts either.
+        var auth = app.MapGroup("/api/auth").RequireRateLimiting("auth");
 
 auth.MapPost("/register", async (RegisterRequest request, QuotesDbContext db, IJwtTokenService tokenService, IOptions<JwtOptions> jwtOptions, CancellationToken ct) =>
 {
@@ -149,7 +153,7 @@ auth.MapPost("/refresh", async (RefreshRequest request, QuotesDbContext db, IJwt
     });
 });
 
-        group.MapGet("", async (HybridCache cache, IQuoteRepository repo, IConfiguration config, CancellationToken ct, int page = 1, int size = 10) =>
+        group.MapGet("", async (HybridCache cache, IQuoteRepository repo, IConfiguration config, ClaimsPrincipal user, CancellationToken ct, int page = 1, int size = 10) =>
         {
             if (page < 1) page = 1;
             if (size < 1) size = 10;
@@ -164,7 +168,7 @@ auth.MapPost("/refresh", async (RefreshRequest request, QuotesDbContext db, IJwt
             // unaffected unless this is explicitly set.
             if (!config.GetValue("Caching:Enabled", true))
             {
-                return Results.Ok(await repo.GetPagedAsync(page, size, ct));
+                return Results.Ok(RedactIfAnonymous(await repo.GetPagedAsync(page, size, ct), user));
             }
 
             // The key MUST carry both page and size - a key that ignores
@@ -191,13 +195,13 @@ auth.MapPost("/refresh", async (RefreshRequest request, QuotesDbContext db, IJwt
                 tags: ["quotes"],
                 cancellationToken: ct);
 
-            return Results.Ok(quotes);
+            return Results.Ok(RedactIfAnonymous(quotes, user));
         });
 
-        group.MapGet("/{id:int}", async (int id, IQuoteRepository repo, CancellationToken ct) =>
+        group.MapGet("/{id:int}", async (int id, IQuoteRepository repo, ClaimsPrincipal user, CancellationToken ct) =>
         {
             var quote = await repo.GetByIdAsync(id, ct);
-            return quote is null ? Results.NotFound() : Results.Ok(quote);
+            return quote is null ? Results.NotFound() : Results.Ok(RedactIfAnonymous(quote, user));
         });
 
         // Anonymous - matches /health's reasoning: a caller of this endpoint has no
@@ -231,14 +235,25 @@ auth.MapPost("/refresh", async (RefreshRequest request, QuotesDbContext db, IJwt
 
         group.MapPost("", async (CreateQuoteRequest request, ClaimsPrincipal user, IQuoteRepository repo, QuotesDbContext db, HybridCache cache, ILogger<Program> logger, CancellationToken ct) =>
         {
+            // day-27: CreateQuoteRequest's [MaxLength] attributes were
+            // never actually enforced - Minimal APIs don't run
+            // DataAnnotations validation automatically the way
+            // [ApiController]-based MVC controllers do. Confirmed by
+            // reading the pipeline, not assumed: no validation filter,
+            // no ValidateDataAnnotations() call, existed anywhere for
+            // this DTO. Checked explicitly here instead.
             var errors = new Dictionary<string, string[]>();
             if (string.IsNullOrWhiteSpace(request.Author))
                 errors["author"] = new[] { "Author is required." };
+            else if (request.Author.Length > 200)
+                errors["author"] = new[] { "Author must be at most 200 characters." };
             else if (!IsQuoteContent(request.Author))
                 errors["author"] = new[] { "Author must contain real words, not just numbers, symbols, or an email address." };
 
             if (string.IsNullOrWhiteSpace(request.Text))
                 errors["text"] = new[] { "Text is required." };
+            else if (request.Text.Length > 2000)
+                errors["text"] = new[] { "Text must be at most 2000 characters." };
             else if (!IsQuoteContent(request.Text))
                 errors["text"] = new[] { "Text must contain real words, not just numbers, symbols, or an email address." };
 
@@ -440,4 +455,27 @@ auth.MapPost("/refresh", async (RefreshRequest request, QuotesDbContext db, IJwt
         var trimmed = value.Trim();
         return !EmailPattern.IsMatch(trimmed) && WordPattern.IsMatch(trimmed);
     }
+
+    // day-27: CreatedBy is a real email address, and GET /api/quotes(/{id})
+    // is deliberately anonymous - unauthenticated callers (anyone,
+    // including a mass scraper with no account at all) must not be able
+    // to harvest every quote author's email just by browsing the public
+    // list. Authenticated callers still see it - the "Added by" display
+    // this repo's own frontend already renders (day-17/README.md) - so
+    // nothing changes for a logged-in user.
+    //
+    // Projects to a NEW object rather than mutating the Quote instance in
+    // place: the list handler's `quotes` may be a HybridCache-cached,
+    // shared instance reused across concurrent callers. Mutating it here
+    // would leak the redaction into (or wrongly hide it from) a
+    // DIFFERENT caller's response depending on request timing - the
+    // cache must keep storing the full truth, with each response
+    // filtering it based on the CURRENT caller only.
+    private static object RedactIfAnonymous(Quote quote, ClaimsPrincipal user) =>
+        user.Identity?.IsAuthenticated == true
+            ? quote
+            : new { quote.Id, quote.Author, quote.Text, CreatedByUserId = (string?)null, CreatedBy = (string?)null };
+
+    private static IEnumerable<object> RedactIfAnonymous(IEnumerable<Quote> quotes, ClaimsPrincipal user) =>
+        quotes.Select(q => RedactIfAnonymous(q, user));
 }
