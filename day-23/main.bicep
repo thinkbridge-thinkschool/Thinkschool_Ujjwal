@@ -55,6 +55,14 @@ param sqlSkuCapacity int
 param sqlMaxSizeBytes int = 34359738368
 @description('Whether this database uses the Azure SQL free monthly limit offer (allowed on only one database per subscription).')
 param sqlUseFreeLimit bool = false
+@description('SQL Server firewall rules, as {name, startIpAddress, endIpAddress} objects. Defaults to Azure-services-only; day-27 tightens this in dev.bicepparam to also include one named IP, replacing the earlier state where anyone who guessed the admin credentials had no network barrier at all in front of them.')
+param sqlFirewallRules array = [
+  {
+    name: 'AllowAzureServices'
+    startIpAddress: '0.0.0.0'
+    endIpAddress: '0.0.0.0'
+  }
+]
 
 @description('When non-empty, overrides the computed Azure SQL connection string sent to the API as ConnectionStrings__Default. Exists so an environment whose deployed application code has not yet been rebuilt against SQL Server (still expects its old connection string, e.g. a SQLite path) can be adopted into a stack without that setting changing out from under it and crashing the running app on restart. Not a secret by itself in the one case this is actually used for today (a bare SQLite file path), but treat it as sensitive if it is ever set to anything else.')
 param sqlConnectionStringOverride string = ''
@@ -119,6 +127,7 @@ module sql 'modules/sql.bicep' = {
     skuCapacity: sqlSkuCapacity
     maxSizeBytes: sqlMaxSizeBytes
     useFreeLimit: sqlUseFreeLimit
+    firewallRules: sqlFirewallRules
     tags: tags
   }
 }

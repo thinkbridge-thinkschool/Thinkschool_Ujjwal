@@ -37,6 +37,26 @@ param sqlSkuCapacity = 2
 param sqlMaxSizeBytes = 34359738368 // 32 GB
 param sqlUseFreeLimit = true
 
+// day-27: tightened from "Azure services only" (the entire internet
+// minus needing an Azure resource, which is not much of a barrier) to
+// also require a specific known IP. My own IP changes if I'm not on a
+// fixed connection - this needs updating (or dropping) whenever it does,
+// which is a real, disclosed limitation, not a permanent fix. A private
+// endpoint (modules/network.bicep, not deployed - see README) is the
+// actual fix; this is the free interim mitigation.
+param sqlFirewallRules = [
+  {
+    name: 'AllowAzureServices'
+    startIpAddress: '0.0.0.0'
+    endIpAddress: '0.0.0.0'
+  }
+  {
+    name: 'AllowMyIP-day27'
+    startIpAddress: '202.12.103.67'
+    endIpAddress: '202.12.103.67'
+  }
+]
+
 // The App Service's deployed CODE still expects its old SQLite
 // connection string - the UseSqlServer code change was made locally but
 // never redeployed (day-24 is about adopting resources into a stack,

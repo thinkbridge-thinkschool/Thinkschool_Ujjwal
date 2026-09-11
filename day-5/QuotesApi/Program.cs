@@ -1,3 +1,5 @@
+using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using QuotesApi.Data;
 using QuotesApi.Extensions;
@@ -6,8 +8,20 @@ using QuotesApi.Middleware;
 using QuotesApi.Models;
 using Serilog;
 using System.Security.Claims;
+using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// day-27: Kestrel's default (30MB) is generous enough to be a real
+// resource-exhaustion vector for an API whose largest legitimate body
+// (a quote: 200 + 2000 chars, or a login form) is a few KB at most. 64KB
+// leaves headroom for the largest real payload plus JSON overhead
+// without leaving the door open to multi-megabyte bodies from callers
+// with no reason to send one.
+builder.WebHost.ConfigureKestrel(options =>
+{
+    options.Limits.MaxRequestBodySize = 64 * 1024;
+});
 
 builder.ConfigureSerilog();
 builder.ConfigureTracing();
@@ -18,6 +32,42 @@ builder.Services.AddApiAuthentication(builder.Configuration);
 builder.Services.AddRandomQuoteClient(builder.Configuration);
 builder.Services.AddHealthChecks()
     .AddCheck<DatabaseHealthCheck>("database");
+
+// day-27: without this, HttpContext.Connection.RemoteIpAddress on App
+// Service is the platform's internal front-end address, not the real
+// caller - every client would land in the SAME rate-limit partition
+// below, meaning one abusive caller could lock out everyone else. Known
+// networks/proxies cleared deliberately: App Service's front-end IPs
+// aren't a small, fixed, documented set the way a self-hosted reverse
+// proxy's would be, and nothing else sits in front of this app.
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+    options.KnownIPNetworks.Clear();
+    options.KnownProxies.Clear();
+});
+
+// day-27: /api/auth/register and /api/auth/login are unauthenticated by
+// necessity - nothing else stops a brute-force credential-stuffing loop
+// against them. Partitioned by caller IP (not global) so a single
+// abusive source is throttled without also punishing every other user
+// sharing the API. 5 requests/minute is deliberately tight for a login
+// form a genuine user hits a handful of times per session at most; queue
+// limit 0 rejects over-limit requests immediately (429) rather than
+// holding them, since a queued brute-force attempt is still a
+// brute-force attempt, just a slower one.
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.AddPolicy("auth", httpContext => RateLimitPartition.GetFixedWindowLimiter(
+        partitionKey: httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+        factory: _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = 5,
+            Window = TimeSpan.FromMinutes(1),
+            QueueLimit = 0,
+        }));
+});
 
 // Dev-only: lets a locally-run Angular dev server (any localhost port) call this
 // API from the browser. Never enabled outside Development.
@@ -51,6 +101,11 @@ else
 
 var app = builder.Build();
 
+// Must run before anything that reads the connection's remote IP -
+// including the rate limiter below and Serilog's request logging - or
+// they see the platform's internal address instead of the real caller.
+app.UseForwardedHeaders();
+
 // Correlation goes outermost so every log line - including from ExceptionMiddleware
 // and the request-logging middleware - carries the request's trace id.
 app.UseMiddleware<CorrelationIdMiddleware>();
@@ -70,6 +125,7 @@ else if (!string.IsNullOrWhiteSpace(app.Configuration["Cors:AllowedOrigin"]))
 
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseRateLimiter();
 
 // Container/orchestrator probe - no bearer token available, so this must stay anonymous.
 app.MapHealthChecks("/health").AllowAnonymous();
