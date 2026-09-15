@@ -1,0 +1,706 @@
+<title>Week 5 Interview Prep</title>
+<style>
+  :root {
+    --bg: #faf9f7;
+    --surface: #ffffff;
+    --border: #e5e1db;
+    --text: #24211d;
+    --text-dim: #6b6459;
+    --accent: #6d4fc2;
+    --accent-bg: #f1ecfb;
+    --code-bg: #f4f2ee;
+    --ok: #1a7f4f;
+    --ok-bg: #e6f5ec;
+    --warn: #a15c00;
+    --warn-bg: #fbf0dd;
+    --tab-inactive: #efece7;
+  }
+  :root:not([data-theme="light"]) {
+    @media (prefers-color-scheme: dark) {
+      --bg: #17151b;
+      --surface: #201d25;
+      --border: #34303b;
+      --text: #ece9f2;
+      --text-dim: #a49dae;
+      --accent: #b09bf0;
+      --accent-bg: #2a2438;
+      --code-bg: #171420;
+      --ok: #6fd6a0;
+      --ok-bg: #16302380;
+      --warn: #e8b25a;
+      --warn-bg: #3a2c1080;
+      --tab-inactive: #26222c;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #17151b;
+    --surface: #201d25;
+    --border: #34303b;
+    --text: #ece9f2;
+    --text-dim: #a49dae;
+    --accent: #b09bf0;
+    --accent-bg: #2a2438;
+    --code-bg: #171420;
+    --ok: #6fd6a0;
+    --ok-bg: #16302380;
+    --warn: #e8b25a;
+    --warn-bg: #3a2c1080;
+    --tab-inactive: #26222c;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    line-height: 1.55;
+    padding: 0 0 4rem;
+  }
+  .wrap { max-width: 880px; margin: 0 auto; padding: 0 1.25rem; }
+
+  header.top {
+    position: sticky; top: 0; z-index: 20;
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+    padding-block: 0.9rem;
+  }
+  header.top h1 { font-size: 1.05rem; margin: 0 0 0.6rem; font-weight: 700; }
+  .daynav { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+  .daynav button {
+    font: inherit; font-size: 0.82rem; font-weight: 600;
+    padding: 0.4rem 0.75rem; border-radius: 999px;
+    border: 1px solid var(--border); background: var(--tab-inactive);
+    color: var(--text-dim); cursor: pointer;
+  }
+  .daynav button.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+  h2.day-title {
+    font-size: 1.5rem; margin: 2.5rem 0 0.3rem;
+    display: flex; align-items: baseline; gap: 0.6rem;
+  }
+  h2.day-title .num {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 1.8rem; height: 1.8rem; border-radius: 50%;
+    background: var(--accent-bg); color: var(--accent); font-size: 0.95rem; font-weight: 800;
+    flex: none;
+  }
+  .day-summary {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+    padding: 0.9rem 1.1rem; margin: 0.8rem 0 1.4rem; font-size: 0.93rem; color: var(--text-dim);
+  }
+  .day-summary strong { color: var(--text); }
+
+  h3.section-h {
+    font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.06em;
+    color: var(--accent); font-weight: 800; margin: 1.8rem 0 0.7rem;
+  }
+
+  details.q {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+    margin-bottom: 0.55rem; overflow: hidden;
+  }
+  details.q > summary {
+    cursor: pointer; padding: 0.75rem 1rem; font-weight: 600; font-size: 0.93rem;
+    list-style: none; display: flex; gap: 0.6rem; align-items: baseline;
+  }
+  details.q > summary::-webkit-details-marker { display: none; }
+  details.q > summary::before {
+    content: "+"; color: var(--accent); font-weight: 800; flex: none; width: 1em;
+  }
+  details.q[open] > summary::before { content: "–"; }
+  details.q .a { padding: 0 1.1rem 1rem 2.4rem; font-size: 0.91rem; color: var(--text); }
+  details.q .a p { margin: 0.5rem 0; }
+  details.q .a ul { margin: 0.4rem 0; padding-left: 1.2rem; }
+  details.q .a li { margin-bottom: 0.25rem; }
+
+  code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    background: var(--code-bg); padding: 0.1rem 0.35rem; border-radius: 4px; font-size: 0.87em;
+  }
+  pre {
+    background: var(--code-bg); border: 1px solid var(--border); border-radius: 8px;
+    padding: 0.8rem 0.9rem; overflow-x: auto; font-size: 0.82rem; margin: 0.6rem 0;
+  }
+  pre code { background: none; padding: 0; }
+
+  .filemap { width: 100%; border-collapse: collapse; font-size: 0.85rem; margin: 0.4rem 0 1rem; }
+  .filemap th, .filemap td {
+    text-align: left; padding: 0.4rem 0.6rem; border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+  .filemap th { color: var(--text-dim); font-weight: 600; font-size: 0.78rem; text-transform: uppercase; }
+  .filemap td code { white-space: nowrap; }
+
+  .callout {
+    border-radius: 8px; padding: 0.7rem 0.9rem; font-size: 0.87rem; margin: 0.6rem 0;
+    border: 1px solid var(--border);
+  }
+  .callout.ok { background: var(--ok-bg); border-color: color-mix(in srgb, var(--ok) 35%, transparent); }
+  .callout.ok strong { color: var(--ok); }
+  .callout.warn { background: var(--warn-bg); border-color: color-mix(in srgb, var(--warn) 35%, transparent); }
+  .callout.warn strong { color: var(--warn); }
+
+  .restable { width: 100%; border-collapse: collapse; font-size: 0.85rem; margin: 0.5rem 0 1.2rem; }
+  .restable th, .restable td { text-align: left; padding: 0.45rem 0.6rem; border-bottom: 1px solid var(--border); }
+  .restable th { color: var(--text-dim); font-weight: 600; font-size: 0.78rem; text-transform: uppercase; }
+  .restable td.name code { font-size: 0.82rem; }
+
+  section.day { scroll-margin-top: 5.5rem; }
+  footer.note { margin-top: 3rem; font-size: 0.8rem; color: var(--text-dim); border-top: 1px solid var(--border); padding-top: 1rem; }
+
+  @media (max-width: 480px) {
+    h2.day-title { font-size: 1.25rem; }
+    details.q .a { padding-left: 1.6rem; }
+  }
+</style>
+
+<div class="wrap">
+
+<header class="top">
+  <h1>Week 5 — Cloud-native + DevOps: Interview Prep</h1>
+  <nav class="daynav" id="daynav">
+    <button data-target="d23">Day 23</button>
+    <button data-target="d24">Day 24</button>
+    <button data-target="d25">Day 25</button>
+    <button data-target="d26">Day 26</button>
+    <button data-target="d27">Day 27</button>
+    <button data-target="resources">Live resources</button>
+  </nav>
+</header>
+
+<section class="day" id="d23">
+<h2 class="day-title"><span class="num">23</span> Bicep IaC</h2>
+<div class="day-summary">
+Wrote the whole QuoteHub infra as Bicep modules (App Service, SQL, Static Web App, Key Vault, App Insights, Service Bus, VNet) with separate <strong>dev</strong> and <strong>prod</strong> parameter files, every cost-sensitive choice justified against the platform's actual free tiers.
+</div>
+
+<h3 class="section-h">Theory</h3>
+
+<details class="q"><summary>What is Bicep, and why use it over raw ARM JSON or Terraform?</summary>
+<div class="a">
+<p>Bicep is a domain-specific language that <strong>transpiles to ARM JSON</strong> — it's not a new deployment engine, just a much more readable authoring layer on top of the same Azure Resource Manager. Every Bicep file compiles down to the same JSON template ARM has always accepted (<code>az bicep build</code> proves this directly).</p>
+<p>Versus raw ARM JSON: modules, string interpolation, type-checking, and a linter, instead of deeply nested JSON with <code>[concat(...)]</code> functions.</p>
+<p>Versus Terraform: Bicep is Azure-only and has no separate state file — ARM itself is the state store (via the resource group's deployment history, or a Deployment Stack — see Day 24). Terraform is multi-cloud but needs its own state management (a backend, locking, drift reconciliation you own).</p>
+</div>
+</details>
+
+<details class="q"><summary>Explain modules, parameters, variables, and outputs — how do they compose?</summary>
+<div class="a">
+<p><strong>Parameters</strong> are inputs supplied at deploy time (from a <code>.bicepparam</code> file or CLI flags). <strong>Variables</strong> are computed inside the template. <strong>Outputs</strong> are values a template exposes after deployment — a child module's outputs become inputs the parent template can wire into other resources.</p>
+<p>Real example — <code>main.bicep</code> can't know the Static Web App's hostname until it's created, so CORS is wired using the module's own output:</p>
+<pre><code>corsAllowedOrigin: 'https://${staticWebApp.outputs.defaultHostname}'</code></pre>
+<p>This means CORS is never hand-typed or guessed — it's structurally impossible for it to drift from the real hostname.</p>
+</div>
+</details>
+
+<details class="q"><summary>How do you make a resource or module conditional in Bicep?</summary>
+<div class="a">
+<p>The <code>if (...)</code> expression after the resource/module declaration. Two real examples from this project:</p>
+<pre><code>module serviceBus 'modules/servicebus.bicep' = if (deployServiceBus) { ... }
+
+module sql 'modules/sql.bicep' = if (deploySql) { ... }</code></pre>
+<p>The second one is from the Day 28 dev/prod database-sharing work: when <code>deploySql</code> is <code>false</code>, the module simply doesn't run, and the connection string is computed from an already-existing server instead. A conditional module's symbol becomes type <code>module | null</code>, which the compiler flags with warning <code>BCP318</code> if you try to read its outputs unconditionally — the fix is the safe-dereference + coalesce pattern, not a manual ternary on the same condition (the compiler doesn't narrow types through ternaries the way it does through <code>.?</code>):</p>
+<pre><code>output sqlServerFqdn string = sql.?outputs.?serverFqdn ?? sharedSqlServerFqdn</code></pre>
+</div>
+</details>
+
+<details class="q"><summary>How does the SQL firewall rules array use a Bicep loop?</summary>
+<div class="a">
+<p>A <code>for</code> expression over an array parameter, one resource per array element:</p>
+<pre><code>resource rules 'Microsoft.Sql/servers/firewallRules@2023-08-01-preview' = [
+  for rule in firewallRules: {
+    parent: server
+    name: rule.name
+    properties: {
+      startIpAddress: rule.startIpAddress
+      endIpAddress: rule.endIpAddress
+    }
+  }
+]</code></pre>
+<p>Passing a different array (Day 27 added a named-IP rule; Day 28 rotated the IP when it changed) is enough to add/replace rules — no resource block duplication.</p>
+</div>
+</details>
+
+<details class="q"><summary>What's <code>@secure()</code> for, and where does the SQL password actually come from?</summary>
+<div class="a">
+<p><code>@secure()</code> marks a parameter as a secret — Azure won't log its value in deployment history/activity logs. It does <strong>not</strong> encrypt anything by itself; it just suppresses the value from being recorded in plaintext deployment logs.</p>
+<p>The password itself is never a literal in any <code>.bicepparam</code> file — every environment uses Bicep's <code>getSecret()</code> function, which pulls the value from Key Vault <em>at deployment time</em>:</p>
+<pre><code>param sqlAdministratorPassword = getSecret('&lt;sub-id&gt;', 'rg-thinkschool-day17', 'kv-quoteshub-dev2', 'sql-admin-password')</code></pre>
+<p>Real gotcha found the hard way: this requires the target vault to have <strong><code>enabledForTemplateDeployment: true</code></strong> — a separate, non-obvious setting from any RBAC role. Without it, ARM's own deployment engine (not your user identity) gets a 403 trying to resolve the secret, with the very specific error <em>"Access denied to first party service"</em>.</p>
+</div>
+</details>
+
+<h3 class="section-h">Practical / coded</h3>
+
+<details class="q"><summary>Walk through the App Service module's conditional VNet integration hook.</summary>
+<div class="a">
+<p>From <code>day-23/modules/appservice.bicep</code> (added Day 27, unused until a paid tier exists):</p>
+<pre><code>param virtualNetworkSubnetId string = ''
+...
+properties: {
+  serverFarmId: plan.id
+  virtualNetworkSubnetId: empty(virtualNetworkSubnetId) ? null : virtualNetworkSubnetId
+}</code></pre>
+<p>Defaulting to empty string and converting to <code>null</code> when unset (rather than sending an empty string as the property value) is what lets the current F1 plan — which can't use VNet integration at all — deploy without error. When a paid tier is added later, passing <code>network.bicep</code>'s <code>integrationSubnetId</code> output here is the only change needed.</p>
+</div>
+</details>
+
+<details class="q"><summary>Why is the SQL admin login/password module written as a separate <code>sql.bicep</code>, and what would you check if a deploy failed with a naming conflict?</summary>
+<div class="a">
+<p>Separation of concerns — <code>main.bicep</code> orchestrates, each module owns one resource type. Real, actually-hit example: <strong>SQL server names, Key Vault names, and Web App/Static Web App names are globally unique across all of Azure</strong> (not just your subscription). Deploying to a brand-new subscription (Day 27) failed with <code>NameAlreadyExists</code> because the old, expired subscription still held those names — the fix was renaming (<code>sql-quotesapi-thinkschool</code> → <code>...thinkschool2</code>), not retrying.</p>
+</div>
+</details>
+
+<h3 class="section-h">File map</h3>
+<table class="filemap">
+<tr><th>File</th><th>What's in it</th></tr>
+<tr><td><code>day-23/main.bicep</code></td><td>Orchestrator — all module wiring, top-level params, computed connection strings/CORS</td></tr>
+<tr><td><code>day-23/modules/appservice.bicep</code></td><td>App Service Plan + Web App, managed identity, Key Vault-reference app setting, VNet integration hook</td></tr>
+<tr><td><code>day-23/modules/sql.bicep</code></td><td>SQL logical server, database, firewall rules loop</td></tr>
+<tr><td><code>day-23/modules/staticwebapp.bicep</code></td><td>Static Web App (Free tier)</td></tr>
+<tr><td><code>day-23/modules/keyvault.bicep</code></td><td>RBAC-mode vault only — no secrets</td></tr>
+<tr><td><code>day-23/modules/keyvaultaccess.bicep</code></td><td>One role-assignment resource (Key Vault Secrets User)</td></tr>
+<tr><td><code>day-23/modules/appinsights.bicep</code></td><td>Log Analytics workspace + workspace-based App Insights</td></tr>
+<tr><td><code>day-23/modules/servicebus.bicep</code></td><td>Namespace/topic — conditional, never deployed (cost)</td></tr>
+<tr><td><code>day-23/modules/network.bicep</code></td><td>VNet + private endpoint scaffold (Day 27, not deployed)</td></tr>
+<tr><td><code>day-23/params/dev.bicepparam</code> / <code>prod.bicepparam</code></td><td>Per-environment values, all secrets via <code>getSecret()</code></td></tr>
+</table>
+</section>
+
+<section class="day" id="d24">
+<h2 class="day-title"><span class="num">24</span> Deployment Stacks + azd</h2>
+<div class="day-summary">
+Moved from plain <code>az deployment group create</code> to <strong>Deployment Stacks</strong> — a resource that tracks "everything this template manages" as a first-class group, with real deletion protection. Wired <strong>azd</strong> (Azure Developer CLI) hooks around it.
+</div>
+
+<h3 class="section-h">Theory</h3>
+
+<details class="q"><summary>What problem do Deployment Stacks solve that a plain deployment doesn't?</summary>
+<div class="a">
+<p>A plain <code>az deployment group create</code> creates/updates resources but has <strong>no memory</strong> of "this deployment owns these resources." If you remove a resource from the template and redeploy, ARM just leaves the orphan sitting there — nothing tracks that it used to be part of this template's output.</p>
+<p>A <strong>Deployment Stack</strong> is its own resource type (<code>Microsoft.Resources/deploymentStacks</code>) that maintains a live "managed resources" list, and reconciles it on every deploy: remove something from the template, and the stack can detach or delete the now-unmanaged resource automatically.</p>
+</div>
+</details>
+
+<details class="q"><summary>Explain <code>actionOnUnmanage</code> — what are the three options and why did this project pick <code>detachAll</code>?</summary>
+<div class="a">
+<ul>
+<li><code>deleteAll</code> — resources removed from the template get actually deleted</li>
+<li><code>deleteResources</code> — deletes resources but keeps resource groups/management groups</li>
+<li><code>detachAll</code> — the stack stops tracking the resource, but it's left alone in Azure, untouched</li>
+</ul>
+<p><code>detachAll</code> is the safe default for anything cost-sensitive or containing real data: removing a line from a Bicep file should never be the same action as running <code>DROP DATABASE</code>. If a resource genuinely needs deleting, that should be a deliberate, separate action — not a side effect of editing a template.</p>
+</div>
+</details>
+
+<details class="q"><summary>What is <code>denySettings</code>, and what does <code>denyDelete</code> actually block?</summary>
+<div class="a">
+<p><code>denySettings</code> applies an Azure <strong>deny assignment</strong> (distinct from a role assignment — it's an explicit block, evaluated separately from RBAC) across every resource the stack manages. <code>denyDelete</code> blocks delete (and, depending on mode, certain writes) on those resources from <em>anyone</em>, including the deploying principal, <strong>except through the stack itself</strong>. <code>applyToChildScopes: true</code> extends this to child resources (e.g. a SQL server's firewall rules).</p>
+<p>This was verified for real, not just read about: an attempt to directly <code>az sql server firewall-rule delete</code> a stale rule was rejected with <code>DenyAssignmentAuthorizationFailed</code>, naming the exact deployment stack that owned the deny assignment — proof the protection is live, not theoretical.</p>
+</div>
+</details>
+
+<details class="q"><summary>What's azd (Azure Developer CLI), and how does it relate to the Bicep files?</summary>
+<div class="a">
+<p><code>azd</code> is a higher-level CLI that wraps provisioning (Bicep/Terraform) <em>and</em> app deployment behind one command (<code>azd up</code>), driven by <code>azure.yaml</code>. It supports lifecycle <strong>hooks</strong> — scripts that run at specific points (pre/post-provision, pre/post-deploy). This project's actual stack-creation logic lives in a hook script rather than azd's own native provisioning, because azd's built-in provisioning didn't yet support Deployment Stacks' specific flags at the time — the hook is what actually calls <code>az stack group create</code> with the right settings.</p>
+</div>
+</details>
+
+<h3 class="section-h">Practical / coded</h3>
+
+<details class="q"><summary>Write (or read) the real <code>az stack group create</code> command used throughout this project.</summary>
+<div class="a">
+<pre><code>az stack group create \
+  --name "quoteshub-dev" \
+  --resource-group rg-thinkschool-day17 \
+  --template-file main.bicep \
+  --parameters params/dev.bicepparam \
+  --action-on-unmanage detachAll \
+  --deny-settings-mode denyDelete \
+  --deny-settings-apply-to-child-scopes \
+  --description "..." \
+  --yes</code></pre>
+<p>Same shape every single time this project touched infrastructure (Days 24 through 28) — proving the settings are a standing policy, not a one-off flag.</p>
+</div>
+</details>
+
+<details class="q"><summary>How do you inspect what a stack currently manages, and its provisioning state?</summary>
+<div class="a">
+<pre><code>az stack group show --name quoteshub-dev --resource-group rg-thinkschool-day17 \
+  --query "{provisioningState:provisioningState, count:length(resources)}"
+
+az stack group show --name quoteshub-dev --resource-group rg-thinkschool-day17 \
+  --query "resources[].{id:id, status:status}"</code></pre>
+<p>Real example of using this productively: after a partially-failed deploy, checking the managed-resource list (not just the top-level "failed" status) revealed that <em>most</em> resources had actually succeeded — only one module had failed independently, so a retry (rather than a full rebuild) was the right move.</p>
+</div>
+</details>
+
+<h3 class="section-h">File map</h3>
+<table class="filemap">
+<tr><th>File</th><th>What's in it</th></tr>
+<tr><td><code>day-24/azure.yaml</code></td><td>azd project definition — services, hooks wiring</td></tr>
+<tr><td><code>day-24/hooks/deploy-stack.sh</code></td><td>The actual <code>az stack group create</code> invocation, called from an azd hook</td></tr>
+<tr><td><code>day-24/.azure/dev/</code>, <code>.azure/prod/</code></td><td>azd's per-environment local state (<code>.env</code>, not secrets — config)</td></tr>
+</table>
+</section>
+
+<section class="day" id="d25">
+<h2 class="day-title"><span class="num">25</span> Identity end-to-end</h2>
+<div class="day-summary">
+Took the JWT signing key out of App Service settings entirely and into <strong>Key Vault</strong>, resolved at runtime by the Web App's own <strong>system-assigned managed identity</strong> — no secret in any app setting, ever again.
+<span style="display:block;margin-top:0.4rem;">No standalone <code>day-25/</code> folder on <code>main</code> — this work lives in <code>day-23/modules/keyvault.bicep</code> + <code>keyvaultaccess.bicep</code> (its own README exists on branch <code>day25-identity</code>, never merged).</span>
+</div>
+
+<h3 class="section-h">Theory</h3>
+
+<details class="q"><summary>System-assigned vs. user-assigned managed identity — which did this project use, and why?</summary>
+<div class="a">
+<p><strong>System-assigned</strong>: tied 1:1 to the resource's lifecycle — created when the Web App is, deleted when it is. <strong>User-assigned</strong>: a standalone identity resource that can be shared across multiple resources and outlives any one of them.</p>
+<p>This project uses system-assigned (<code>identity: { type: 'SystemAssigned' }</code> on the Web App) — there's exactly one App Service that needs exactly one identity, with no sharing requirement, so the simpler, auto-lifecycle-managed option is the right one. Confirmed live: <code>az webapp identity show</code> returns <code>"type": "SystemAssigned"</code> with a real <code>principalId</code>.</p>
+</div>
+</details>
+
+<details class="q"><summary>RBAC authorization vs. Key Vault access policies — what's the actual difference, and what does <code>enableRbacAuthorization: true</code> change?</summary>
+<div class="a">
+<p>The legacy <strong>access policy</strong> model is a vault-specific ACL, invisible to (and unrelated to) Azure's general RBAC system. <strong>RBAC mode</strong> makes vault permissions ordinary Azure role assignments (<code>Microsoft.Authorization/roleAssignments</code>) scoped to the vault — the same mechanism used everywhere else in Azure, auditable and manageable the same way as any other resource's access.</p>
+<p>Real, load-bearing consequence: <strong>an RBAC-mode vault grants nobody access by default</strong>, not even its own creator. Every single time this project created a new vault (Days 25, 27, 28), the very next step had to be granting a role — the create command alone was never enough.</p>
+</div>
+</details>
+
+<details class="q"><summary>What's the least-privilege split between "my user account" and "the app's identity" on the vault?</summary>
+<div class="a">
+<p>Two different roles, deliberately:</p>
+<ul>
+<li><strong>Key Vault Secrets Officer</strong> (read + write secrets) — granted to the human operator, temporarily, to actually populate secret values via <code>az keyvault secret set</code>.</li>
+<li><strong>Key Vault Secrets User</strong> (read secret values only — built-in role <code>4633458b-17de-408a-b874-0445c86b69e6</code>) — granted to the App Service's managed identity. It can never write a secret, manage the vault, or touch keys/certificates.</li>
+</ul>
+<p>Confirmed live on the current vault:</p>
+<pre><code>$ az role assignment list --scope .../vaults/kv-quoteshub-dev2
+Principal          Role
+------------------ -------------------------
+User                Key Vault Secrets Officer
+ServicePrincipal    Key Vault Secrets User</code></pre>
+</div>
+</details>
+
+<details class="q"><summary>How does an App Service actually resolve a Key Vault reference at runtime — what's the mechanism?</summary>
+<div class="a">
+<p>An app setting value of the special form <code>@Microsoft.KeyVault(SecretUri=...)</code> is recognized by the App Service platform itself (not your code). At runtime, the platform uses the site's managed identity to fetch the real secret value from Key Vault and substitutes it — your application code just reads <code>IConfiguration["Jwt:Key"]</code> as an ordinary string and never sees the reference syntax or talks to Key Vault directly.</p>
+</div>
+</details>
+
+<h3 class="section-h">Practical / coded — including a real production incident</h3>
+
+<details class="q"><summary>Show the exact Bicep that builds the Key Vault reference string.</summary>
+<div class="a">
+<p>From <code>day-23/modules/appservice.bicep</code>:</p>
+<pre><code>param keyVaultUri string
+param jwtKeySecretName string = 'jwt-key'
+...
+{ name: 'Jwt__Key', value: '@Microsoft.KeyVault(SecretUri=${keyVaultUri}secrets/${jwtKeySecretName}/)' }</code></pre>
+<p>Notice this is a <strong>plain string built at deploy time</strong> — the actual secret value never flows through this parameter, the template, or any deployment log. Only a URI does.</p>
+</div>
+</details>
+
+<details class="q"><summary>Why are <code>keyvault.bicep</code> and <code>keyvaultaccess.bicep</code> two separate modules instead of one?</summary>
+<div class="a">
+<p>To break a circular dependency: the role assignment needs the App Service's <code>principalId</code> (only exists after <code>appservice.bicep</code> runs), while <code>appservice.bicep</code> needs the vault's URI (only exists after the vault is created). If the role assignment lived inside the vault module and took <code>principalId</code> as a parameter, the <em>entire vault module</em> would end up waiting on the App Service, which itself waits on the vault — a genuine cycle. Two modules, wired independently by <code>main.bicep</code>, avoids it.</p>
+</div>
+</details>
+
+<details class="q"><summary>Real incident: a Key Vault reference showed <code>MSINotEnabled</code> even though the identity clearly existed. What was wrong, and how was it actually fixed?</summary>
+<div class="a">
+<p>After deployment, <code>az webapp identity show</code> already returned a real <code>principalId</code>, and the app setting already showed the correct reference string — but querying resolution status directly showed:</p>
+<pre><code>GET .../config/configreferences/appsettings
+"status": "MSINotEnabled",
+"details": "Reference was not able to be resolved because site Managed Identity not enabled."</code></pre>
+<p>Two full app restarts and several minutes of polling didn't change it. The actual fix, found in Microsoft's own docs for this exact symptom: App Service caches Key Vault reference resolutions, and a config change doesn't always trigger a reliable re-fetch. A direct <code>POST</code> to the refresh endpoint fixes it immediately:</p>
+<pre><code>POST /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.Web/sites/{site}/config/configreferences/appsettings/refresh?api-version=2022-03-01</code></pre>
+<p><strong>Interview-ready takeaway:</strong> if a Key Vault reference reports <code>MSINotEnabled</code> after confirming the identity and role assignment are genuinely correct, don't keep restarting — call the refresh endpoint.</p>
+</div>
+</details>
+
+<details class="q"><summary>Would a direct out-of-stack write (e.g. <code>az webapp identity assign</code>) have been blocked by <code>denyDelete</code>?</summary>
+<div class="a">
+<p>No — <code>denyDelete</code> blocks <em>deletes</em>, not writes. An identity assignment or app-setting change is a write, so it would likely go through directly. The real reason to route it through the stack instead isn't "it would fail" — it's that a direct write wouldn't <em>last</em>: the next plain <code>az stack group create</code> would silently revert it back to whatever <code>main.bicep</code> says, since the stack (not the live resource) is the authoritative source of truth. This is a subtlety worth stating precisely in an interview — conflating "denied" with "not durable" is an easy mistake.</p>
+</div>
+</details>
+
+<h3 class="section-h">File map</h3>
+<table class="filemap">
+<tr><th>File</th><th>What's in it</th></tr>
+<tr><td><code>day-23/modules/keyvault.bicep</code></td><td>The vault — RBAC mode, soft-delete, no secrets</td></tr>
+<tr><td><code>day-23/modules/keyvaultaccess.bicep</code></td><td>Key Vault Secrets User role assignment for a given principal</td></tr>
+<tr><td><code>day-23/modules/appservice.bicep</code></td><td><code>identity</code> block + Key Vault reference app setting construction</td></tr>
+<tr><td><code>day-5/QuotesApi/Extensions/AuthenticationExtensions.cs</code></td><td>JWT bearer validation reading the resolved key from config</td></tr>
+</table>
+</section>
+
+<section class="day" id="d26">
+<h2 class="day-title"><span class="num">26</span> App Insights + KQL</h2>
+<div class="day-summary">
+Wired workspace-based Application Insights end-to-end, fixed a <strong>real trace-context propagation bug</strong> across an async boundary (HTTP request → background outbox worker), and wrote/ran real KQL against live traffic.
+</div>
+
+<h3 class="section-h">Theory</h3>
+
+<details class="q"><summary>Workspace-based vs. classic Application Insights — why only one option today?</summary>
+<div class="a">
+<p>Classic (non-workspace) App Insights is <strong>retired for new resources</strong> — workspace-based is the only option, not a preference. In this mode, a <strong>Log Analytics workspace</strong> is the actual data store; the App Insights component is a thin view/API surface plus the SDK-facing connection string over that same workspace data.</p>
+</div>
+</details>
+
+<details class="q"><summary>What is <code>operation_Id</code>, and how does a trace actually get "stitched" across a background worker?</summary>
+<div class="a">
+<p><code>operation_Id</code> is the distributed-tracing correlation ID shared by every telemetry item belonging to the same logical operation (a W3C <code>traceparent</code> under the hood). A same-process HTTP request automatically shares this via <code>Activity.Current</code> — but once you cross an <strong>async boundary</strong> (a value written to a database now, read back by a different process/thread later), that ambient context is gone unless you explicitly capture and restore it.</p>
+<p>This project's outbox pattern needed exactly that: capture the trace ID when the outbox row is written, store it as data, and restore it as the <em>parent</em> context when the background relay later processes that row.</p>
+</div>
+</details>
+
+<details class="q"><summary>What does <code>percentile()</code> tell you that <code>avg()</code> doesn't, and why does that matter here?</summary>
+<div class="a">
+<p>An average can hide a heavy tail entirely — one slow request and nine fast ones can produce an "average" that looks fine while p99 shows a real problem. Real evidence from this project: at just <code>n=3</code>, <code>POST /api/quotes</code> showed p50 = 2546ms vs p99 = 5679ms — over 2x apart — a gap an average alone would have flattened into one misleading number.</p>
+</div>
+</details>
+
+<h3 class="section-h">Practical / coded — real KQL, run against live data</h3>
+
+<details class="q"><summary>Query: stitch a full trace by <code>operation_Id</code> across request → dependency → dependency.</summary>
+<div class="a">
+<pre><code>union requests, dependencies, traces
+| where operation_Id == '1b34db74478abf6227eaf579dd4389c1'
+| project timestamp, itemType, name, message, duration, resultCode, severityLevel
+| order by timestamp asc</code></pre>
+<p>Real result: a 3-level trace — <code>POST /api/quotes/</code> (5679.5ms) → <code>ProcessOutboxMessage</code> (11754.5ms, a background dependency) → a SQLite write (26.4ms) nested under it — all sharing one <code>operation_Id</code>, proving the trace-context fix actually worked end to end.</p>
+</div>
+</details>
+
+<details class="q"><summary>Query: p50/p99 duration by endpoint.</summary>
+<div class="a">
+<pre><code>requests
+| where timestamp > ago(1h)
+| summarize count = count(), p50 = percentile(duration, 50), p99 = percentile(duration, 99) by name
+| order by p99 desc</code></pre>
+</div>
+</details>
+
+<details class="q"><summary>Query: per-request self-time vs. dependency-time — and a real limitation found while running it.</summary>
+<div class="a">
+<pre><code>requests
+| where timestamp > ago(1h)
+| project operation_Id, requestName = name, requestDuration = duration
+| join kind=leftouter (
+    dependencies | where timestamp > ago(1h)
+    | summarize dependencyDuration = sum(duration), dependencyCount = count() by operation_Id
+  ) on operation_Id
+| extend dependencyDuration = coalesce(dependencyDuration, 0.0), dependencyCount = coalesce(dependencyCount, 0)
+| extend selfDuration = requestDuration - dependencyDuration
+| project requestName, requestDuration, dependencyDuration, selfDuration, dependencyCount
+| order by requestDuration desc</code></pre>
+<div class="callout warn"><strong>Real, disclosed limitation:</strong> the <code>POST /api/quotes/</code> row showed <code>selfDuration = -6101ms</code> — nonsensical. Cause: <code>ProcessOutboxMessage</code> is correctly linked by <code>operation_Id</code>, but runs <em>after</em> the request already returned, not nested within it. Summing every same-<code>operation_Id</code> dependency only makes sense for genuinely synchronous, in-request work. The real fix would add a time-window guard (dependency timestamp within <code>[request.timestamp, request.timestamp + request.duration]</code>) — a good interview answer about knowing a query's blind spot rather than trusting a plausible-looking result blindly.</div>
+</div>
+</details>
+
+<details class="q"><summary>Query: the actual error-rate alert condition, and why the 10-request floor matters.</summary>
+<div class="a">
+<pre><code>requests
+| where timestamp > ago(5m)
+| summarize total = count(), serverErrors = countif(toint(resultCode) >= 500)
+| where total >= 10
+| extend errorRatePercent = todouble(serverErrors) / total * 100
+| where errorRatePercent > 5</code></pre>
+<p>Two gotchas worth naming: <code>resultCode</code> is a <strong>string</strong> column — comparing it to <code>500</code> without <code>toint()</code> fails with <code>SEM0064</code> (found by actually running it). And the <code>total >= 10</code> floor exists so 1 failure out of 2 total requests (a statistically meaningless 50%) can't fire the alert on a quiet API.</p>
+</div>
+</details>
+
+<h3 class="section-h">File map</h3>
+<table class="filemap">
+<tr><th>File</th><th>What's in it</th></tr>
+<tr><td><code>day-23/modules/appinsights.bicep</code></td><td>Log Analytics workspace + App Insights component</td></tr>
+<tr><td><code>day-5/QuotesApi/Messaging/OutboxRelay.cs</code></td><td><code>ActivitySource</code>, parsing stored <code>TraceParent</code> back into an <code>ActivityContext</code>, starting the child activity</td></tr>
+<tr><td><code>day-5/QuotesApi/Extensions/EndpointExtensions.cs</code> (~line 300-307)</td><td>Capturing <code>Activity.Current?.Id</code> into the outbox row at write time</td></tr>
+<tr><td><code>day-26/README.md</code></td><td>All 5 real queries + real result rows, and the negative-self-time write-up</td></tr>
+<tr><td><code>day-26/telemetry-report.html</code></td><td>Rendered report for screenshotting</td></tr>
+</table>
+</section>
+
+<section class="day" id="d27">
+<h2 class="day-title"><span class="num">27</span> Security pass</h2>
+<div class="day-summary">
+STRIDE threat model against the <em>actual live system</em>, real rate limiting shipped, a real information-disclosure bug found and fixed, and an honest "not run" on the ZAP scan when disk space made it unsafe.
+</div>
+
+<h3 class="section-h">Theory</h3>
+
+<details class="q"><summary>Name the six STRIDE categories and give one real example of each from this project.</summary>
+<div class="a">
+<ul>
+<li><strong>Spoofing</strong> — no email verification on registration; anyone can register as <code>victim@realcompany.com</code></li>
+<li><strong>Tampering</strong> — <code>[MaxLength]</code> attributes were silently unenforced (Minimal APIs don't auto-validate DataAnnotations the way <code>[ApiController]</code> MVC does)</li>
+<li><strong>Repudiation</strong> — no structured "who deleted what" audit trail beyond an in-the-moment ownership check</li>
+<li><strong>Information Disclosure</strong> — <code>createdBy</code> (a real email) was returned by the fully anonymous <code>GET /api/quotes</code></li>
+<li><strong>Denial of Service</strong> — no rate limiting anywhere, on an App Service with a hard 60 CPU-minutes/day quota (F1 tier)</li>
+<li><strong>Elevation of Privilege</strong> — every authenticated user is granted all three scopes (<code>read</code>/<code>write</code>/<code>delete</code>) unconditionally at login — no privilege tier exists at all</li>
+</ul>
+</div>
+</details>
+
+<details class="q"><summary>Fixed-window vs. sliding-window rate limiting — which did this project use, and what's the trade-off?</summary>
+<div class="a">
+<p>Used ASP.NET Core's built-in <strong>fixed-window</strong> limiter (<code>Microsoft.AspNetCore.RateLimiting</code>, no new dependency). Trade-off: a fixed window can allow a burst right at the boundary (e.g. 5 requests in the last second of one window, 5 more in the first second of the next — 10 in ~2 seconds). A sliding window smooths this out but costs more to track. For a login endpoint at this scale, fixed-window's simplicity was the right call — named honestly as a real, accepted limitation rather than over-engineered away.</p>
+</div>
+</details>
+
+<details class="q"><summary>Why does partitioning a rate limiter by IP require <code>UseForwardedHeaders()</code> on App Service specifically?</summary>
+<div class="a">
+<p>Without it, <code>HttpContext.Connection.RemoteIpAddress</code> on App Service returns the platform's internal front-end address — <em>every</em> caller would land in the same partition, meaning one abusive user could rate-limit every other legitimate user sharing the API. <code>UseForwardedHeaders</code> (trusting <code>X-Forwarded-For</code>) must run early in the pipeline — before the rate limiter and before request logging — so downstream middleware sees the real caller.</p>
+</div>
+</details>
+
+<details class="q"><summary>What's the minimum App Service tier for VNet integration, and why can't F1 use private endpoints?</summary>
+<div class="a">
+<p>VNet integration requires a <strong>dedicated-compute tier</strong> — Basic (B1) and above; Free/Shared tiers are explicitly excluded, confirmed directly against Microsoft's own docs. Real cost, queried from Azure's retail pricing API (not guessed): <strong>$0.02/hour for B1 Linux in East Asia → ~$14.60/month</strong>. The VNet + private endpoint Bicep was written anyway (<code>network.bicep</code>) so it's ready the moment the tier is upgraded — but never deployed, since it's a real recurring cost against a fixed credit.</p>
+</div>
+</details>
+
+<h3 class="section-h">Practical / coded</h3>
+
+<details class="q"><summary>Show the actual rate limiter registration and policy.</summary>
+<div class="a">
+<p>From <code>day-5/QuotesApi/Program.cs</code>:</p>
+<pre><code>builder.Services.Configure&lt;ForwardedHeadersOptions&gt;(options =&gt;
+{
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+    options.KnownIPNetworks.Clear();
+    options.KnownProxies.Clear();
+});
+
+builder.Services.AddRateLimiter(options =&gt;
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.AddPolicy("auth", httpContext =&gt; RateLimitPartition.GetFixedWindowLimiter(
+        partitionKey: httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+        factory: _ =&gt; new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = 5,
+            Window = TimeSpan.FromMinutes(1),
+            QueueLimit = 0,
+        }));
+});
+...
+app.UseForwardedHeaders();   // must be first
+...
+app.UseRateLimiter();        // after UseAuthorization</code></pre>
+<p>Applied to the whole auth group in <code>EndpointExtensions.cs</code>: <code>app.MapGroup("/api/auth").RequireRateLimiting("auth")</code>.</p>
+</div>
+</details>
+
+<details class="q"><summary>Demonstrate the rate limiter actually working — real output, not a description.</summary>
+<div class="a">
+<pre><code>for i in $(seq 1 8); do curl -X POST .../api/auth/login -d '{bad creds}'; done
+
+attempt 1: HTTP 401
+attempt 2: HTTP 401
+attempt 3: HTTP 401
+attempt 4: HTTP 401
+attempt 5: HTTP 401
+attempt 6: HTTP 429
+attempt 7: HTTP 429
+attempt 8: HTTP 429</code></pre>
+</div>
+</details>
+
+<details class="q"><summary>Show the <code>createdBy</code> redaction fix — and explain why it maps over the data instead of mutating it in place.</summary>
+<div class="a">
+<pre><code>private static object RedactIfAnonymous(Quote quote, ClaimsPrincipal user) =&gt;
+    user.Identity?.IsAuthenticated == true
+        ? quote
+        : new { quote.Id, quote.Author, quote.Text, CreatedByUserId = (string?)null, CreatedBy = (string?)null };</code></pre>
+<p>The list handler's <code>quotes</code> variable can be a <strong>HybridCache-cached, shared instance</strong> reused across concurrent callers. Mutating the cached objects in place would leak the redaction into (or wrongly hide it from) a <em>different</em> caller depending on request timing — the cache must keep storing the full truth, with each response filtered fresh based on the current caller only.</p>
+</div>
+</details>
+
+<details class="q"><summary>What was wrong with the original <code>ExceptionMiddleware</code>, and what's the fix?</summary>
+<div class="a">
+<p>It returned the raw <code>ex.Message</code> in the 500 response body in <strong>every</strong> environment, including production — a real information-disclosure vector (file paths, connection details, internal type names can end up in an exception message). Fix: gate the detail on environment, keep logging the full exception server-side either way:</p>
+<pre><code>Detail = _env.IsDevelopment() ? ex.Message : "An unexpected error occurred. Please try again later."</code></pre>
+</div>
+</details>
+
+<details class="q"><summary>Confirm every endpoint's authorization was actually verified, not assumed — how?</summary>
+<div class="a">
+<p>By reading the whole <code>EndpointExtensions.cs</code> file directly rather than trusting memory or naming conventions. Result: <code>GET /api/quotes</code> and <code>GET /api/quotes/{id}</code> are anonymous by deliberate design (documented in a code comment); every mutating endpoint (<code>POST</code>/<code>DELETE</code> on quotes and collections) carries <code>.RequireAuthorization(...)</code>, and <code>DELETE</code>/item-removal additionally check resource ownership via a custom <code>IAuthorizationHandler</code>. Also confirmed <strong>no global fallback auth policy</strong> exists — anonymous endpoints are anonymous by explicit design, not by an accidental absence of a default-deny.</p>
+</div>
+</details>
+
+<h3 class="section-h">File map</h3>
+<table class="filemap">
+<tr><th>File</th><th>What's in it</th></tr>
+<tr><td><code>day-5/QuotesApi/Program.cs</code></td><td>Rate limiter registration, forwarded-headers config, Kestrel body-size limit</td></tr>
+<tr><td><code>day-5/QuotesApi/Extensions/EndpointExtensions.cs</code></td><td>Auth policy on every endpoint, length validation, <code>RedactIfAnonymous</code></td></tr>
+<tr><td><code>day-5/QuotesApi/Middleware/ExceptionMiddleware.cs</code></td><td>Environment-gated error detail</td></tr>
+<tr><td><code>day-23/modules/network.bicep</code></td><td>VNet + private endpoint scaffold — written, not deployed</td></tr>
+<tr><td><code>day-27/README.md</code></td><td>Full STRIDE table + verify section</td></tr>
+</table>
+</section>
+
+<section class="day" id="resources">
+<h2 class="day-title" style="margin-top:2.5rem;">Live Azure resources right now</h2>
+<div class="day-summary">Queried directly, not from memory — <code>az resource list</code> against both resource groups on the <strong>Azure for Students</strong> subscription, East Asia region.</div>
+
+<h3 class="section-h"><code>rg-thinkschool-day17</code> (dev)</h3>
+<table class="restable">
+<tr><th>Resource</th><th>Type</th><th>What it's for</th></tr>
+<tr><td class="name"><code>quotesapi-thinkschool2</code></td><td>App Service (F1)</td><td>The API — system-assigned identity, Key Vault-reference JWT key</td></tr>
+<tr><td class="name"><code>asp-quotesapi-free</code></td><td>App Service Plan</td><td>F1 free compute plan backing the Web App</td></tr>
+<tr><td class="name"><code>sql-quotesapi-thinkschool2</code></td><td>SQL logical server</td><td>Hosts the <code>quoteshub</code> database — <strong>shared by dev AND prod</strong> (Day 28)</td></tr>
+<tr><td class="name"><code>kv-quoteshub-dev2</code></td><td>Key Vault (RBAC)</td><td>Holds <code>jwt-key</code>, <code>sql-admin-password</code> — the real admin credentials both environments use</td></tr>
+<tr><td class="name"><code>swa-quotesui-thinkschool2</code></td><td>Static Web App (Free)</td><td>Dev's Angular frontend</td></tr>
+<tr><td class="name"><code>law-quoteshub-dev</code> / <code>appi-quoteshub-dev</code></td><td>Log Analytics + App Insights</td><td>Telemetry — 30-day retention, workspace-based</td></tr>
+</table>
+
+<h3 class="section-h"><code>rg-thinkschool-prod</code> (prod)</h3>
+<table class="restable">
+<tr><th>Resource</th><th>Type</th><th>What it's for</th></tr>
+<tr><td class="name"><code>quotesapi-thinkschool-prod2</code></td><td>App Service (F1)</td><td>Prod's API — own identity, own JWT key, <strong>same database as dev</strong></td></tr>
+<tr><td class="name"><code>asp-quotesapi-prod</code></td><td>App Service Plan</td><td>F1, separate plan from dev's</td></tr>
+<tr><td class="name"><code>kv-quoteshub-prod</code></td><td>Key Vault (RBAC)</td><td>Prod's own <code>jwt-key</code> — deliberately different signing key from dev's, even though they share data</td></tr>
+<tr><td class="name"><code>swa-quotesui-prod2</code></td><td>Static Web App (Free)</td><td>Prod's frontend, built via the <code>prod-live</code> Angular config</td></tr>
+<tr><td class="name"><code>law-quoteshub-prod</code> / <code>appi-quoteshub-prod</code></td><td>Log Analytics + App Insights</td><td>Separate telemetry from dev — the two environments' traces don't mix</td></tr>
+</table>
+
+<div class="callout ok"><strong>No SQL resource in the prod list</strong> — that's the point. Prod's Bicep deploys with <code>deploySql = false</code>, so it never creates or manages a database; it just authenticates to dev's, using dev's real credentials. Cost stayed at $0/month for the whole rebuild — the entire reason a second database wasn't created.</div>
+
+<h3 class="section-h">Deployment Stack settings on both</h3>
+<pre><code>actionOnUnmanage: { resources: "detach", resourceGroups: "detach" }
+denySettings:     { mode: "denyDelete", applyToChildScopes: true }</code></pre>
+
+<h3 class="section-h">Role assignments on <code>kv-quoteshub-dev2</code> (confirmed live)</h3>
+<pre><code>Principal          Role
+------------------  -------------------------
+User                Key Vault Secrets Officer   (human operator — flagged, not revoked)
+ServicePrincipal    Key Vault Secrets User       (the App Service's managed identity)</code></pre>
+</section>
+
+<footer class="note">
+Grounded in the actual repo state and live Azure query results at the time this was written (Day 27→28 work). File contents can drift after this — if something doesn't match what you see locally, trust the file over this note.
+</footer>
+
+</div>
+
+<script>
+  const buttons = document.querySelectorAll('#daynav button');
+  const sections = [...buttons].map(b => document.getElementById(b.dataset.target));
+  buttons.forEach(b => b.addEventListener('click', () => {
+    document.getElementById(b.dataset.target).scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }));
+  const setActive = () => {
+    let current = sections[0];
+    for (const s of sections) {
+      if (s.getBoundingClientRect().top < 100) current = s;
+    }
+    buttons.forEach(b => b.classList.toggle('active', b.dataset.target === current.id));
+  };
+  document.addEventListener('scroll', setActive, { passive: true });
+  setActive();
+</script>

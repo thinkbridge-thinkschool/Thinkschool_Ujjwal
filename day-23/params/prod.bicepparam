@@ -1,6 +1,11 @@
 using '../main.bicep'
 
-param location = 'centralus'
+// eastasia, not centralus - day-27 rebuilt on a new "Azure for Students"
+// subscription whose policy only allows a specific region set, and of
+// those, only eastasia also supports Static Web Apps. See
+// day-27/README.md for the full reasoning; prod uses the same region as
+// dev for the same reason, not a separate decision.
+param location = 'eastasia'
 param environmentName = 'prod'
 
 // --- App Service - REDUCED FOR COST (day-24): the subscription backing
@@ -13,7 +18,7 @@ param environmentName = 'prod'
 //   appServiceSkuCapacity = 2, appServiceAlwaysOn = true
 // (supports Always On, autoscale, staging slots - none of which F1 allows).
 param appServicePlanName = 'asp-quotesapi-prod'
-param webAppName = 'quotesapi-thinkschool-prod'
+param webAppName = 'quotesapi-thinkschool-prod2'
 param appServiceSkuName = 'F1'
 param appServiceSkuTier = 'Free'
 param appServiceSkuCapacity = 1
@@ -23,21 +28,27 @@ param aspnetCoreEnvironment = 'Production'
 param entraAudience = '9595ac6d-99d5-42b5-bffe-fed74bce6f42'
 param enableServiceBusIntegration = false // Service Bus is not being deployed at all right now - see below
 
-// --- Azure SQL - REDUCED FOR COST (day-24): serverless GP_S_Gen5, same
-// family as dev, instead of a provisioned GP_Gen5 with 4 fixed vCores.
-// useFreeLimit stays false here on purpose - Azure allows the free-limit
-// offer on only ONE database per subscription, and dev's database
-// already claims it. This is therefore "near-free" rather than free:
-// serverless auto-pauses to zero compute cost when idle, leaving only a
-// small storage charge (well under $1/month for a near-empty database).
-// In reality this row would be:
-//   sqlSkuName = 'GP_Gen5' (provisioned, not serverless), sqlSkuCapacity = 4,
-//   sqlMaxSizeBytes = 137438953472 (128 GB)
-// (steady-state production load doesn't want serverless's cold-start
-// pause behavior, and a fixed vCore count is predictable to budget for).
-param sqlServerName = 'sql-quotesapi-prod'
+// --- Azure SQL - day-28: prod now SHARES dev's actual database instead
+// of getting its own. deploySql = false means main.bicep never runs
+// sql.bicep for this deployment at all - sqlServerName/sqlDatabaseName
+// below name dev's real, already-deployed server/database, and
+// sqlAdministratorPassword (further down) is dev's real admin password,
+// not a new one. This is the deliberate trade for staying at $0/month
+// on a $100 one-time student credit: the free-limit offer covers only
+// one database per subscription, and a second, non-free database - even
+// "near-free" serverless - is a real, ongoing, avoidable cost for a
+// capstone project with no actual production traffic. The accepted
+// consequence: prod and dev now share the same data AND the same SQL
+// credentials, not just the same server. A real production system would
+// never do this - it is a cost trade for a learning environment, stated
+// here rather than left implicit. The sku*/maxSizeBytes/useFreeLimit
+// params below are inert while deploySql is false (sql.bicep never
+// runs) - kept only so this file stays structurally valid and documents
+// what a real, separate prod database would have used.
+param deploySql = false
+param sqlServerName = 'sql-quotesapi-thinkschool2' // dev's real server - see deploySql comment above
 param sqlAdministratorLogin = 'quoteshubadmin'
-param sqlDatabaseName = 'quoteshub'
+param sqlDatabaseName = 'quoteshub' // dev's real, shared database
 param sqlSkuTier = 'GeneralPurpose'
 param sqlSkuName = 'GP_S_Gen5'
 param sqlSkuFamily = 'Gen5'
@@ -62,34 +73,36 @@ param deployServiceBus = false
 // dev, instead of Standard. In reality this would be:
 //   staticWebAppSkuTier = 'Standard'
 // (custom domains with managed certificates, larger app/API size limit).
-param staticWebAppName = 'swa-quotesui-prod'
+param staticWebAppName = 'swa-quotesui-prod2'
 param staticWebAppSkuTier = 'Free'
 param staticWebAppRepositoryUrl = 'https://github.com/thinkbridge-thinkschool/Thinkschool_Ujjwal'
 param staticWebAppBranch = 'main'
 
-// --- Key Vault - NOT created (day-25 only stood up kv-quoteshub-dev;
-// prod's vault, and prod itself, was out of that task's scope). This
-// name is kept as a placeholder so this file stays structurally valid
-// against main.bicep - deploying prod for real needs kv-quoteshub-prod
-// actually created first, same as dev needed kv-quoteshub-dev. ---
+// --- Key Vault - day-28: prod gets its OWN vault, created fresh in
+// rg-thinkschool-prod, holding its OWN jwt-key (a different signing key
+// than dev's - sharing the database doesn't require sharing the token
+// signing key, and keeping it separate means a token minted by one
+// environment doesn't validate against the other, even though both
+// read/write the same Users table). ---
 param keyVaultName = 'kv-quoteshub-prod'
 
-// --- Application Insights - NOT created for prod (day-26 scope was
-// dev's live app only). Kept structurally valid against main.bicep. ---
+// --- Application Insights - day-28: created fresh for prod, separate
+// from dev's, so telemetry from the two environments doesn't mix -
+// workspace-based, free ingestion tier, same as dev. ---
 param logAnalyticsWorkspaceName = 'law-quoteshub-prod'
 param appInsightsName = 'appi-quoteshub-prod'
 param logAnalyticsRetentionInDays = 30
 
-// --- Secrets: never literals, never defaults. Pulled from an existing
-// Key Vault via getSecret() - the vault itself is NOT created by this
-// Bicep (see README.md's "Secrets" section) and must already exist with
-// these secret names populated before this file can be used to deploy
-// for real. Replace <subscription-id> with the target subscription's ID
-// before use. A production vault should not be the same vault dev
-// secrets live in - note this is a still-unpopulated placeholder vault
-// name, unlike dev's, which now points at a real, existing vault. ---
-param sqlAdministratorPassword = getSecret('<subscription-id>', 'rg-thinkschool-prod', 'kv-quoteshub-prod', 'sql-admin-password')
-param serviceBusConnectionString = getSecret('<subscription-id>', 'rg-thinkschool-prod', 'kv-quoteshub-prod', 'servicebus-connection-string')
+// --- Secrets: never literals, never defaults. sqlAdministratorPassword
+// is the one deliberate cross-environment reference in this file - it
+// reads dev's REAL vault (kv-quoteshub-dev2, rg-thinkschool-day17),
+// because deploySql = false above means this deployment authenticates
+// to dev's actual database using dev's actual credentials, not new ones
+// of its own. serviceBusConnectionString stays pointed at prod's own
+// (not-yet-existing) vault - it's an unused placeholder either way,
+// since deployServiceBus is false. ---
+param sqlAdministratorPassword = getSecret('e55c32ce-f67a-4e77-b258-3a6dc2822724', 'rg-thinkschool-day17', 'kv-quoteshub-dev2', 'sql-admin-password')
+param serviceBusConnectionString = getSecret('e55c32ce-f67a-4e77-b258-3a6dc2822724', 'rg-thinkschool-prod', 'kv-quoteshub-prod', 'servicebus-connection-string')
 
 // staticWebAppRepositoryToken is left unassigned: it defaults to '' in
 // main.bicep. Only required the first time swa-quotesui-prod is ever

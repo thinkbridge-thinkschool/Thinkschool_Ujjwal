@@ -55,6 +55,8 @@ param sqlSkuCapacity int
 param sqlMaxSizeBytes int = 34359738368
 @description('Whether this database uses the Azure SQL free monthly limit offer (allowed on only one database per subscription).')
 param sqlUseFreeLimit bool = false
+@description('When true (default), this deployment creates its own SQL server/database. When false, it reuses an existing server/database instead - sqlServerName/sqlDatabaseName must then name a server/database that already exists (in this or another environment) and sqlAdministratorPassword must be that server\'s real admin password, not a new one. day-28: prod uses this to share dev\'s SQL database rather than pay for a second one - the free-limit offer only covers one database per subscription, so a second database would be a real, avoidable monthly cost for a capstone project with no production traffic to justify it. Consequence, stated plainly: prod and dev then also share the same data and the same SQL credentials, not just the same server - this is a deliberate, accepted trade-off for a learning project, not a pattern to carry into a real production system.')
+param deploySql bool = true
 @description('SQL Server firewall rules, as {name, startIpAddress, endIpAddress} objects. Defaults to Azure-services-only; day-27 tightens this in dev.bicepparam to also include one named IP, replacing the earlier state where anyone who guessed the admin credentials had no network barrier at all in front of them.')
 param sqlFirewallRules array = [
   {
@@ -113,7 +115,7 @@ param tags object = {
   project: 'quoteshub'
 }
 
-module sql 'modules/sql.bicep' = {
+module sql 'modules/sql.bicep' = if (deploySql) {
   name: 'sql-deployment'
   params: {
     serverName: sqlServerName
@@ -131,6 +133,15 @@ module sql 'modules/sql.bicep' = {
     tags: tags
   }
 }
+
+// day-28: when deploySql is false, this environment deliberately shares
+// another environment's already-deployed SQL server/database instead of
+// getting its own - the FQDN follows Azure SQL's fixed, documented
+// naming pattern, so it can be computed here without needing an
+// `existing` resource lookup (which would require this deployment to
+// also have read access to the OTHER environment's resource group,
+// not just to the Key Vault holding its credentials).
+var sharedSqlServerFqdn = '${sqlServerName}.database.windows.net'
 
 module serviceBus 'modules/servicebus.bicep' = if (deployServiceBus) {
   name: 'servicebus-deployment'
@@ -199,7 +210,7 @@ module appService 'modules/appservice.bicep' = {
     keyVaultUri: keyVault.outputs.vaultUri
     applicationInsightsConnectionString: appInsights.outputs.connectionString
     sqlConnectionString: empty(sqlConnectionStringOverride)
-      ? 'Server=tcp:${sql.outputs.serverFqdn},1433;Database=${sqlDatabaseName};User Id=${sqlAdministratorLogin};Password=${sqlAdministratorPassword};Encrypt=True;TrustServerCertificate=False;'
+      ? 'Server=tcp:${sql.?outputs.?serverFqdn ?? sharedSqlServerFqdn},1433;Database=${sqlDatabaseName};User Id=${sqlAdministratorLogin};Password=${sqlAdministratorPassword};Encrypt=True;TrustServerCertificate=False;'
       : sqlConnectionStringOverride
     enableServiceBusIntegration: enableServiceBusIntegration
     // When Service Bus is actually being deployed, its own real
@@ -225,7 +236,7 @@ module keyVaultAccess 'modules/keyvaultaccess.bicep' = {
 
 output webAppHostName string = appService.outputs.webAppHostName
 output staticWebAppHostName string = staticWebApp.outputs.defaultHostname
-output sqlServerFqdn string = sql.outputs.serverFqdn
+output sqlServerFqdn string = sql.?outputs.?serverFqdn ?? sharedSqlServerFqdn
 output serviceBusNamespaceName string = deployServiceBus ? serviceBus!.outputs.namespaceName : ''
 output appServicePrincipalId string = appService.outputs.principalId
 output keyVaultName string = keyVault.outputs.vaultName

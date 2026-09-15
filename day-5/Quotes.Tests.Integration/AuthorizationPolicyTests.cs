@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.IdentityModel.Tokens;
@@ -71,6 +72,12 @@ public class PolicyTestFactory : WebApplicationFactory<Program>
                 overrides[key] = value;
         }
 
+        // day-28: see SqliteTestDatabase.cs - pre-creates the schema (and
+        // stamps migration history) before the host below ever runs
+        // Program.cs's Database.Migrate(), which would otherwise try to
+        // apply the SqlServer-authored migrations' DDL against SQLite.
+        SqliteTestDatabase.EnsureCreatedWithMigrationHistoryStamped(_dbPath);
+
         var originalValues = new Dictionary<string, string?>();
         foreach (var (key, value) in overrides)
         {
@@ -95,6 +102,32 @@ public class PolicyTestFactory : WebApplicationFactory<Program>
         {
             services.RemoveAll<IClock>();
             services.AddSingleton<IClock>(Clock);
+
+            // day-28: same fix as SeedBehaviorTests.cs - AddInfrastructure
+            // now calls UseSqlServer unconditionally, and "Data Source=..."
+            // (the SQLite-style value ConnectionStrings__Default is set to
+            // above) is also a valid SqlClient key, so without this the
+            // app would try to open a real network connection instead of
+            // the intended local SQLite file.
+            services.RemoveAll<DbContextOptions<QuotesDbContext>>();
+            // See SeedBehaviorTests.cs's matching comment - the configurator
+            // type EF registers alongside DbContextOptions is internal to
+            // EF Core, so it's matched by name rather than by type.
+            foreach (var descriptor in services
+                .Where(d => d.ServiceType.IsGenericType
+                    && d.ServiceType.Name.Contains("DbContextOptionsConfiguration")
+                    && d.ServiceType.GenericTypeArguments.Contains(typeof(QuotesDbContext)))
+                .ToList())
+            {
+                services.Remove(descriptor);
+            }
+            // See SeedBehaviorTests.cs's matching comment - suppresses
+            // PendingModelChangesWarning, which fires here only because
+            // the stored migration snapshot was captured against
+            // SqlServer, not because anything is actually out of sync.
+            services.AddDbContext<QuotesDbContext>(options => options
+                .UseSqlite($"Data Source={_dbPath}")
+                .ConfigureWarnings(w => w.Ignore(RelationalEventId.PendingModelChangesWarning)));
         });
     }
 

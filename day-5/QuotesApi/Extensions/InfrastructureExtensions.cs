@@ -24,20 +24,17 @@ public static class InfrastructureExtensions
         services.AddSingleton<DbHitCounterInterceptor>();
         services.AddSingleton<QuoteQueryCounter>();
 
-        // Reverted to SQLite for day-26's redeploy, deliberately: the
-        // SQL Server cutover this project has been building toward
-        // (day-24/day-25) is still incomplete - the EF Core migrations in
-        // this project were generated against the Sqlite provider and
-        // have never been regenerated for SQL Server, so running them
-        // against the empty quoteshub database on sql-quotesapi-thinkschool
-        // would very likely fail with Sqlite-specific DDL that SQL Server
-        // rejects. Day 26's actual scope is OpenTelemetry/Application
-        // Insights, not finishing that migration, so this stays on SQLite
-        // (matching main.bicep's sqlConnectionStringOverride, which is
-        // still active) rather than risk crashing the live app on a
-        // change unrelated to today's task. See day-26/README.md.
+        // day-28: the SQL Server cutover started day-24 is finished here.
+        // Both dev and prod now genuinely point at the same Azure SQL
+        // database (rather than dev still running on SQLite behind the
+        // scenes while a real SQL connection string sat unused) - see
+        // day-23/params/prod.bicepparam's deploySql comment for why prod
+        // shares dev's database instead of getting its own. The prior
+        // SQLite-flavored migrations were replaced with a fresh
+        // SQL-Server-targeted baseline (Migrations/) rather than
+        // regenerated in place - see that folder's own history for why.
         services.AddDbContext<QuotesDbContext>((sp, options) =>
-            options.UseSqlite(config.GetConnectionString("Default") ?? "Data Source=quotes.db")
+            options.UseSqlServer(config.GetConnectionString("Default"))
                    .AddInterceptors(sp.GetRequiredService<DbHitCounterInterceptor>()));
 
         services.AddScoped<IQuoteRepository, QuoteRepository>();

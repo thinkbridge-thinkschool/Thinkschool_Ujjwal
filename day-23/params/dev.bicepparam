@@ -51,20 +51,20 @@ param sqlFirewallRules = [
     endIpAddress: '0.0.0.0'
   }
   {
-    name: 'AllowMyIP-day27'
-    startIpAddress: '202.12.103.67'
-    endIpAddress: '202.12.103.67'
+    // day-28: this changed from day-27's - confirms the disclosed "not a
+    // fixed connection" limitation noted above is real, not theoretical.
+    name: 'AllowMyIP-day28'
+    startIpAddress: '103.177.202.14'
+    endIpAddress: '103.177.202.14'
   }
 ]
 
-// The App Service's deployed CODE still expects its old SQLite
-// connection string - the UseSqlServer code change was made locally but
-// never redeployed (day-24 is about adopting resources into a stack,
-// not about finishing that cutover). Pushing the computed Azure SQL
-// connection string here instead would crash the live app the moment
-// it restarts after this app setting changes. Remove this override once
-// the SQL Server-based build is actually redeployed to this Web App.
-param sqlConnectionStringOverride = 'Data Source=/home/quotes.db'
+// day-28: removed. The SQL Server cutover is finished (InfrastructureExtensions.cs
+// now calls UseSqlServer, not UseSqlite) and dev now shares the same
+// real Azure SQL database prod does - see prod.bicepparam's deploySql
+// comment. Leaving this unset means main.bicep computes the real
+// connection string (main.bicep's default is empty string, which is
+// what "unset" means for this parameter).
 
 // --- Service Bus - Standard is the cheapest tier that supports topics
 // (Basic does not), but Standard still has a real monthly cost - there

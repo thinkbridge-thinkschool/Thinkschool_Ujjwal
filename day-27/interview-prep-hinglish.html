@@ -1,0 +1,709 @@
+<title>Week 5 Interview Prep (Hinglish)</title>
+<style>
+  :root {
+    --bg: #faf9f7;
+    --surface: #ffffff;
+    --border: #e5e1db;
+    --text: #24211d;
+    --text-dim: #6b6459;
+    --accent: #6d4fc2;
+    --accent-bg: #f1ecfb;
+    --code-bg: #f4f2ee;
+    --ok: #1a7f4f;
+    --ok-bg: #e6f5ec;
+    --warn: #a15c00;
+    --warn-bg: #fbf0dd;
+    --tab-inactive: #efece7;
+  }
+  :root:not([data-theme="light"]) {
+    @media (prefers-color-scheme: dark) {
+      --bg: #17151b;
+      --surface: #201d25;
+      --border: #34303b;
+      --text: #ece9f2;
+      --text-dim: #a49dae;
+      --accent: #b09bf0;
+      --accent-bg: #2a2438;
+      --code-bg: #171420;
+      --ok: #6fd6a0;
+      --ok-bg: #16302380;
+      --warn: #e8b25a;
+      --warn-bg: #3a2c1080;
+      --tab-inactive: #26222c;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #17151b;
+    --surface: #201d25;
+    --border: #34303b;
+    --text: #ece9f2;
+    --text-dim: #a49dae;
+    --accent: #b09bf0;
+    --accent-bg: #2a2438;
+    --code-bg: #171420;
+    --ok: #6fd6a0;
+    --ok-bg: #16302380;
+    --warn: #e8b25a;
+    --warn-bg: #3a2c1080;
+    --tab-inactive: #26222c;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    line-height: 1.55;
+    padding: 0 0 4rem;
+  }
+  .wrap { max-width: 880px; margin: 0 auto; padding: 0 1.25rem; }
+
+  header.top {
+    position: sticky; top: 0; z-index: 20;
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+    padding-block: 0.9rem;
+  }
+  header.top h1 { font-size: 1.05rem; margin: 0 0 0.6rem; font-weight: 700; }
+  .daynav { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+  .daynav button {
+    font: inherit; font-size: 0.82rem; font-weight: 600;
+    padding: 0.4rem 0.75rem; border-radius: 999px;
+    border: 1px solid var(--border); background: var(--tab-inactive);
+    color: var(--text-dim); cursor: pointer;
+  }
+  .daynav button.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+  h2.day-title {
+    font-size: 1.5rem; margin: 2.5rem 0 0.3rem;
+    display: flex; align-items: baseline; gap: 0.6rem;
+  }
+  h2.day-title .num {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 1.8rem; height: 1.8rem; border-radius: 50%;
+    background: var(--accent-bg); color: var(--accent); font-size: 0.95rem; font-weight: 800;
+    flex: none;
+  }
+  .day-summary {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+    padding: 0.9rem 1.1rem; margin: 0.8rem 0 1.4rem; font-size: 0.93rem; color: var(--text-dim);
+  }
+  .day-summary strong { color: var(--text); }
+
+  h3.section-h {
+    font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.06em;
+    color: var(--accent); font-weight: 800; margin: 1.8rem 0 0.7rem;
+  }
+
+  details.q {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+    margin-bottom: 0.55rem; overflow: hidden;
+  }
+  details.q > summary {
+    cursor: pointer; padding: 0.75rem 1rem; font-weight: 600; font-size: 0.93rem;
+    list-style: none; display: flex; gap: 0.6rem; align-items: baseline;
+  }
+  details.q > summary::-webkit-details-marker { display: none; }
+  details.q > summary::before {
+    content: "+"; color: var(--accent); font-weight: 800; flex: none; width: 1em;
+  }
+  details.q[open] > summary::before { content: "–"; }
+  details.q .a { padding: 0 1.1rem 1rem 2.4rem; font-size: 0.91rem; color: var(--text); }
+  details.q .a p { margin: 0.5rem 0; }
+  details.q .a ul { margin: 0.4rem 0; padding-left: 1.2rem; }
+  details.q .a li { margin-bottom: 0.25rem; }
+
+  code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    background: var(--code-bg); padding: 0.1rem 0.35rem; border-radius: 4px; font-size: 0.87em;
+  }
+  pre {
+    background: var(--code-bg); border: 1px solid var(--border); border-radius: 8px;
+    padding: 0.8rem 0.9rem; overflow-x: auto; font-size: 0.82rem; margin: 0.6rem 0;
+  }
+  pre code { background: none; padding: 0; }
+
+  .filemap { width: 100%; border-collapse: collapse; font-size: 0.85rem; margin: 0.4rem 0 1rem; }
+  .filemap th, .filemap td {
+    text-align: left; padding: 0.4rem 0.6rem; border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+  .filemap th { color: var(--text-dim); font-weight: 600; font-size: 0.78rem; text-transform: uppercase; }
+  .filemap td code { white-space: nowrap; }
+
+  .callout {
+    border-radius: 8px; padding: 0.7rem 0.9rem; font-size: 0.87rem; margin: 0.6rem 0;
+    border: 1px solid var(--border);
+  }
+  .callout.ok { background: var(--ok-bg); border-color: color-mix(in srgb, var(--ok) 35%, transparent); }
+  .callout.ok strong { color: var(--ok); }
+  .callout.warn { background: var(--warn-bg); border-color: color-mix(in srgb, var(--warn) 35%, transparent); }
+  .callout.warn strong { color: var(--warn); }
+
+  .restable { width: 100%; border-collapse: collapse; font-size: 0.85rem; margin: 0.5rem 0 1.2rem; }
+  .restable th, .restable td { text-align: left; padding: 0.45rem 0.6rem; border-bottom: 1px solid var(--border); }
+  .restable th { color: var(--text-dim); font-weight: 600; font-size: 0.78rem; text-transform: uppercase; }
+  .restable td.name code { font-size: 0.82rem; }
+
+  section.day { scroll-margin-top: 5.5rem; }
+  footer.note { margin-top: 3rem; font-size: 0.8rem; color: var(--text-dim); border-top: 1px solid var(--border); padding-top: 1rem; }
+
+  .langswitch { font-size: 0.8rem; color: var(--text-dim); margin-top: 0.3rem; }
+  .langswitch a { color: var(--accent); text-decoration: none; font-weight: 600; }
+
+  @media (max-width: 480px) {
+    h2.day-title { font-size: 1.25rem; }
+    details.q .a { padding-left: 1.6rem; }
+  }
+</style>
+
+<div class="wrap">
+
+<header class="top">
+  <h1>Week 5 — Cloud-native + DevOps: Interview Prep (Hinglish)</h1>
+  <nav class="daynav" id="daynav">
+    <button data-target="d23">Day 23</button>
+    <button data-target="d24">Day 24</button>
+    <button data-target="d25">Day 25</button>
+    <button data-target="d26">Day 26</button>
+    <button data-target="d27">Day 27</button>
+    <button data-target="resources">Live resources</button>
+  </nav>
+</header>
+
+<section class="day" id="d23">
+<h2 class="day-title"><span class="num">23</span> Bicep IaC</h2>
+<div class="day-summary">
+Pura QuoteHub infra Bicep modules me likha — App Service, SQL, Static Web App, Key Vault, App Insights, Service Bus, VNet. Alag <strong>dev</strong> aur <strong>prod</strong> parameter files, aur har cost-wala decision platform ke actual free tiers dekh ke justify kiya gaya.
+</div>
+
+<h3 class="section-h">Theory</h3>
+
+<details class="q"><summary>Bicep kya hai, aur raw ARM JSON ya Terraform ke upar kyun use kiya?</summary>
+<div class="a">
+<p>Bicep ek domain-specific language hai jo <strong>ARM JSON me transpile</strong> hota hai — matlab ye koi naya deployment engine nahi hai, bas ARM ke upar ek zyada readable authoring layer hai. Har Bicep file compile hoke wahi JSON template banati hai jo ARM hamesha se accept karta aaya hai (<code>az bicep build</code> se ye khud confirm ho jaata hai).</p>
+<p>Raw ARM JSON ke against: modules, string interpolation, type-checking, aur ek linter milta hai — deeply nested JSON aur <code>[concat(...)]</code> jaise functions ki jagah.</p>
+<p>Terraform ke against: Bicep sirf Azure ke liye hai aur iska koi separate state file nahi hota — ARM khud hi state store hota hai (resource group ki deployment history se, ya Deployment Stack se — Day 24 dekho). Terraform multi-cloud hai lekin apna state management khud manage karna padta hai (backend, locking, drift reconciliation - sab apna responsibility).</p>
+</div>
+</details>
+
+<details class="q"><summary>Modules, parameters, variables, outputs explain karo — ye sab kaise saath me kaam karte hain?</summary>
+<div class="a">
+<p><strong>Parameters</strong> deploy time pe diye jaane wale inputs hote hain (ek <code>.bicepparam</code> file se ya CLI flags se). <strong>Variables</strong> template ke andar compute hote hain. <strong>Outputs</strong> woh values hain jo ek template deployment ke baad expose karta hai — ek child module ka output parent template me doosre resources me wire ho sakta hai.</p>
+<p>Real example — <code>main.bicep</code> ko pata nahi hota Static Web App ka hostname jab tak wo create na ho jaaye, isliye CORS module ke output se hi wire kiya jaata hai:</p>
+<pre><code>corsAllowedOrigin: 'https://${staticWebApp.outputs.defaultHostname}'</code></pre>
+<p>Matlab CORS kabhi bhi hand-type ya guess nahi kiya jaata — ye structurally hi impossible hai ki real hostname se alag ho jaaye.</p>
+</div>
+</details>
+
+<details class="q"><summary>Bicep me resource ya module ko conditional kaise banate hain?</summary>
+<div class="a">
+<p><code>if (...)</code> expression resource/module declaration ke baad lagta hai. Do real examples is project se:</p>
+<pre><code>module serviceBus 'modules/servicebus.bicep' = if (deployServiceBus) { ... }
+
+module sql 'modules/sql.bicep' = if (deploySql) { ... }</code></pre>
+<p>Doosra wala Day 28 ke dev/prod database-sharing wale kaam se hai: jab <code>deploySql</code> false hota hai, module simply chalta hi nahi, aur connection string ek pehle se existing server se compute ho jaata hai. Conditional module ka symbol type <code>module | null</code> ban jaata hai, jisko compiler warning <code>BCP318</code> deta hai agar aap uske outputs unconditionally read karo — fix hai safe-dereference + coalesce pattern, manual ternary nahi (compiler ternary ke through type narrow nahi karta jaise <code>.?</code> se karta hai):</p>
+<pre><code>output sqlServerFqdn string = sql.?outputs.?serverFqdn ?? sharedSqlServerFqdn</code></pre>
+</div>
+</details>
+
+<details class="q"><summary>SQL firewall rules array me Bicep loop kaise use hua hai?</summary>
+<div class="a">
+<p>Ek <code>for</code> expression array parameter ke upar, har array element ke liye ek resource:</p>
+<pre><code>resource rules 'Microsoft.Sql/servers/firewallRules@2023-08-01-preview' = [
+  for rule in firewallRules: {
+    parent: server
+    name: rule.name
+    properties: {
+      startIpAddress: rule.startIpAddress
+      endIpAddress: rule.endIpAddress
+    }
+  }
+]</code></pre>
+<p>Bas ek alag array pass karna kaafi hai rules add/replace karne ke liye (Day 27 me ek named-IP rule add hua; Day 28 me IP change hone pe rotate hua) — resource block duplicate karne ki zaroorat nahi.</p>
+</div>
+</details>
+
+<details class="q"><summary><code>@secure()</code> kis liye hai, aur SQL password actually kahan se aata hai?</summary>
+<div class="a">
+<p><code>@secure()</code> ek parameter ko secret mark karta hai — Azure uska value plaintext me deployment history/activity logs me nahi likhega. Ye khud se koi encryption nahi karta; bas value ko plaintext deployment logs me record hone se rokta hai.</p>
+<p>Password khud kabhi kisi <code>.bicepparam</code> file me literal nahi hota — har environment Bicep ke <code>getSecret()</code> function ka use karta hai, jo value ko <em>deployment time</em> pe Key Vault se khींch ke laata hai:</p>
+<pre><code>param sqlAdministratorPassword = getSecret('&lt;sub-id&gt;', 'rg-thinkschool-day17', 'kv-quoteshub-dev2', 'sql-admin-password')</code></pre>
+<p>Real gotcha jo mushkil se pata chala: iske liye target vault me <strong><code>enabledForTemplateDeployment: true</code></strong> hona zaroori hai — ye ek alag, non-obvious setting hai RBAC role se bilkul different. Bina iske, ARM ka apna deployment engine (aapka user identity nahi) secret resolve karte waqt 403 leta hai, ek bahut specific error ke saath: <em>"Access denied to first party service"</em>.</p>
+</div>
+</details>
+
+<h3 class="section-h">Practical / coded</h3>
+
+<details class="q"><summary>App Service module ka conditional VNet integration hook walk-through karo.</summary>
+<div class="a">
+<p><code>day-23/modules/appservice.bicep</code> se (Day 27 me add hua, tab tak unused jab tak paid tier na aaye):</p>
+<pre><code>param virtualNetworkSubnetId string = ''
+...
+properties: {
+  serverFarmId: plan.id
+  virtualNetworkSubnetId: empty(virtualNetworkSubnetId) ? null : virtualNetworkSubnetId
+}</code></pre>
+<p>Default empty string aur unset hone pe <code>null</code> me convert karna (empty string property value me bhejne ke bajaye) — yehi cheez current F1 plan (jo VNet integration bilkul use nahi kar sakta) ko bina error deploy hone deta hai. Jab kabhi paid tier add ho, sirf <code>network.bicep</code> ka <code>integrationSubnetId</code> output yahan pass karna hoga, aur kuch nahi.</p>
+</div>
+</details>
+
+<details class="q"><summary>SQL admin login/password module ko alag <code>sql.bicep</code> me kyun likha, aur agar naming conflict se deploy fail ho jaaye to kya check karoge?</summary>
+<div class="a">
+<p>Separation of concerns — <code>main.bicep</code> orchestrate karta hai, har module apna resource type khud sambhalta hai. Real, actually-hit example: <strong>SQL server names, Key Vault names, aur Web App/Static Web App names Azure me globally unique hote hain</strong> (sirf aapki subscription me nahi, poori Azure me). Ek bilkul nayi subscription pe deploy karte waqt (Day 27) <code>NameAlreadyExists</code> error aaya kyunki purani, expire ho chuki subscription abhi bhi wo names pakde hui thi — fix rename karna tha (<code>sql-quotesapi-thinkschool</code> → <code>...thinkschool2</code>), retry karna nahi.</p>
+</div>
+</details>
+
+<h3 class="section-h">File map</h3>
+<table class="filemap">
+<tr><th>File</th><th>Isme kya hai</th></tr>
+<tr><td><code>day-23/main.bicep</code></td><td>Orchestrator — saara module wiring, top-level params, computed connection strings/CORS</td></tr>
+<tr><td><code>day-23/modules/appservice.bicep</code></td><td>App Service Plan + Web App, managed identity, Key Vault-reference app setting, VNet integration hook</td></tr>
+<tr><td><code>day-23/modules/sql.bicep</code></td><td>SQL logical server, database, firewall rules loop</td></tr>
+<tr><td><code>day-23/modules/staticwebapp.bicep</code></td><td>Static Web App (Free tier)</td></tr>
+<tr><td><code>day-23/modules/keyvault.bicep</code></td><td>Sirf RBAC-mode vault — koi secrets nahi</td></tr>
+<tr><td><code>day-23/modules/keyvaultaccess.bicep</code></td><td>Ek role-assignment resource (Key Vault Secrets User)</td></tr>
+<tr><td><code>day-23/modules/appinsights.bicep</code></td><td>Log Analytics workspace + workspace-based App Insights</td></tr>
+<tr><td><code>day-23/modules/servicebus.bicep</code></td><td>Namespace/topic — conditional, kabhi deploy nahi hua (cost ki wajah se)</td></tr>
+<tr><td><code>day-23/modules/network.bicep</code></td><td>VNet + private endpoint scaffold (Day 27, deploy nahi hua)</td></tr>
+<tr><td><code>day-23/params/dev.bicepparam</code> / <code>prod.bicepparam</code></td><td>Per-environment values, saare secrets <code>getSecret()</code> se</td></tr>
+</table>
+</section>
+
+<section class="day" id="d24">
+<h2 class="day-title"><span class="num">24</span> Deployment Stacks + azd</h2>
+<div class="day-summary">
+Plain <code>az deployment group create</code> se <strong>Deployment Stacks</strong> pe shift kiya — ek resource jo "ye template kya-kya manage karta hai" ko ek group ki tarah track karta hai, saath me real deletion protection ke saath. Iske aas paas <strong>azd</strong> (Azure Developer CLI) hooks wire kiye.
+</div>
+
+<h3 class="section-h">Theory</h3>
+
+<details class="q"><summary>Deployment Stacks kaunsi problem solve karte hain jo plain deployment nahi karti?</summary>
+<div class="a">
+<p>Ek plain <code>az deployment group create</code> resources create/update to kar deta hai lekin ise <strong>koi yaad nahi rehta</strong> ki "ye deployment in resources ko own karta hai." Agar aap template se ek resource hata do aur redeploy karo, ARM us orphan resource ko waise hi chhod deta hai — kuch bhi track nahi karta ki wo pehle is template ka part tha.</p>
+<p>Ek <strong>Deployment Stack</strong> khud apna resource type hai (<code>Microsoft.Resources/deploymentStacks</code>) jo ek live "managed resources" list maintain karta hai, aur har deploy pe reconcile karta hai: template se kuch hatao, aur stack us ab-unmanaged resource ko automatically detach ya delete kar sakta hai.</p>
+</div>
+</details>
+
+<details class="q"><summary><code>actionOnUnmanage</code> explain karo — teen options kya hain aur is project ne <code>detachAll</code> kyun choose kiya?</summary>
+<div class="a">
+<ul>
+<li><code>deleteAll</code> — template se hataye gaye resources actually delete ho jaate hain</li>
+<li><code>deleteResources</code> — resources delete hote hain lekin resource groups/management groups rakhe jaate hain</li>
+<li><code>detachAll</code> — stack us resource ko track karna band kar deta hai, lekin Azure me wo waise ka waisa chhod diya jaata hai, touch nahi hota</li>
+</ul>
+<p><code>detachAll</code> safe default hai kisi bhi cost-sensitive ya real-data-wali cheez ke liye: Bicep file se ek line hatana kabhi bhi <code>DROP DATABASE</code> chalane jaisa nahi hona chahiye. Agar koi resource genuinely delete karna hai, to wo ek deliberate, alag action hona chahiye — template edit karne ka side-effect nahi.</p>
+</div>
+</details>
+
+<details class="q"><summary><code>denySettings</code> kya hai, aur <code>denyDelete</code> actually kya block karta hai?</summary>
+<div class="a">
+<p><code>denySettings</code> ek Azure <strong>deny assignment</strong> apply karta hai (ye RBAC role assignment se alag hai — ye ek explicit block hai, RBAC se alag evaluate hota hai) us stack ke saare managed resources pe. <code>denyDelete</code> delete (aur, mode ke hisaab se, kuch writes) ko <em>kisi ke bhi</em> liye block karta hai, deploying principal sameत — <strong>sirf stack ke through</strong> hi ho sakta hai. <code>applyToChildScopes: true</code> isko child resources tak extend karta hai (jaise SQL server ke firewall rules).</p>
+<p>Ye actually verify hua hai, sirf padha nahi gaya: ek stale rule ko direct <code>az sql server firewall-rule delete</code> se hatane ki koshish <code>DenyAssignmentAuthorizationFailed</code> se reject ho gayi, aur uss exact deployment stack ka naam bhi bataya jisne deny assignment banaya tha — proof ki protection genuinely live hai, sirf theory nahi.</p>
+</div>
+</details>
+
+<details class="q"><summary>azd (Azure Developer CLI) kya hai, aur Bicep files se iska kya relation hai?</summary>
+<div class="a">
+<p><code>azd</code> ek higher-level CLI hai jo provisioning (Bicep/Terraform) <em>aur</em> app deployment dono ko ek command (<code>azd up</code>) ke peeche wrap kar deta hai, jo <code>azure.yaml</code> se drive hota hai. Isme lifecycle <strong>hooks</strong> support hote hain — scripts jo specific points pe chalte hain (pre/post-provision, pre/post-deploy). Is project ki actual stack-creation logic azd ki native provisioning ki jagah ek hook script me rehti hai, kyunki jab ye kaam hua tab azd ki built-in provisioning Deployment Stacks ke specific flags support nahi karti thi — hook hi actually <code>az stack group create</code> ko sahi settings ke saath call karta hai.</p>
+</div>
+</details>
+
+<h3 class="section-h">Practical / coded</h3>
+
+<details class="q"><summary>Is project me har jagah use hua real <code>az stack group create</code> command likho (ya padho).</summary>
+<div class="a">
+<pre><code>az stack group create \
+  --name "quoteshub-dev" \
+  --resource-group rg-thinkschool-day17 \
+  --template-file main.bicep \
+  --parameters params/dev.bicepparam \
+  --action-on-unmanage detachAll \
+  --deny-settings-mode denyDelete \
+  --deny-settings-apply-to-child-scopes \
+  --description "..." \
+  --yes</code></pre>
+<p>Har baar bilkul yehi shape use hua (Day 24 se Day 28 tak) — jo prove karta hai ki ye settings ek standing policy hai, one-off flag nahi.</p>
+</div>
+</details>
+
+<details class="q"><summary>Ek stack abhi kya manage kar raha hai, aur uska provisioning state kaise check karte ho?</summary>
+<div class="a">
+<pre><code>az stack group show --name quoteshub-dev --resource-group rg-thinkschool-day17 \
+  --query "{provisioningState:provisioningState, count:length(resources)}"
+
+az stack group show --name quoteshub-dev --resource-group rg-thinkschool-day17 \
+  --query "resources[].{id:id, status:status}"</code></pre>
+<p>Real example jaha ye kaam aaya: ek partially-failed deploy ke baad, managed-resource list check karne se (sirf top-level "failed" status nahi) pata chala ki <em>zyadatar</em> resources actually succeed ho chuke the — sirf ek module independently fail hua tha, isliye retry karna sahi tha, poora rebuild nahi.</p>
+</div>
+</details>
+
+<h3 class="section-h">File map</h3>
+<table class="filemap">
+<tr><th>File</th><th>Isme kya hai</th></tr>
+<tr><td><code>day-24/azure.yaml</code></td><td>azd project definition — services, hooks wiring</td></tr>
+<tr><td><code>day-24/hooks/deploy-stack.sh</code></td><td>Actual <code>az stack group create</code> invocation, azd hook se call hota hai</td></tr>
+<tr><td><code>day-24/.azure/dev/</code>, <code>.azure/prod/</code></td><td>azd ki per-environment local state (<code>.env</code>, secrets nahi — config)</td></tr>
+</table>
+</section>
+
+<section class="day" id="d25">
+<h2 class="day-title"><span class="num">25</span> Identity end-to-end</h2>
+<div class="day-summary">
+JWT signing key ko App Service settings se poora nikaal ke <strong>Key Vault</strong> me daala, jo Web App ke apne <strong>system-assigned managed identity</strong> se runtime pe resolve hota hai — ab kisi bhi app setting me koi secret nahi hai, kabhi nahi.
+<span style="display:block;margin-top:0.4rem;">Koi standalone <code>day-25/</code> folder <code>main</code> branch pe nahi hai — ye kaam <code>day-23/modules/keyvault.bicep</code> + <code>keyvaultaccess.bicep</code> me rehta hai (iska apna README <code>day25-identity</code> branch pe hai, kabhi merge nahi hua).</span>
+</div>
+
+<h3 class="section-h">Theory</h3>
+
+<details class="q"><summary>System-assigned vs. user-assigned managed identity — is project ne kaunsa use kiya, aur kyun?</summary>
+<div class="a">
+<p><strong>System-assigned</strong>: resource ke lifecycle se 1:1 juda hota hai — Web App ke saath banta hai, uske saath delete hota hai. <strong>User-assigned</strong>: ek standalone identity resource jo multiple resources me share ho sakta hai aur kisi ek se zyada time tak rehta hai.</p>
+<p>Ye project system-assigned use karta hai (<code>identity: { type: 'SystemAssigned' }</code> Web App pe) — sirf ek App Service hai jisko sirf ek identity chahiye, koi sharing requirement nahi hai, isliye simpler, auto-lifecycle-managed option hi sahi choice hai. Live confirm kiya: <code>az webapp identity show</code> return karta hai <code>"type": "SystemAssigned"</code> ek real <code>principalId</code> ke saath.</p>
+</div>
+</details>
+
+<details class="q"><summary>RBAC authorization vs. Key Vault access policies — actual difference kya hai, aur <code>enableRbacAuthorization: true</code> se kya change hota hai?</summary>
+<div class="a">
+<p>Legacy <strong>access policy</strong> model ek vault-specific ACL hai, jo Azure ke general RBAC system se bilkul invisible/unrelated hai. <strong>RBAC mode</strong> vault permissions ko ordinary Azure role assignments (<code>Microsoft.Authorization/roleAssignments</code>) bana deta hai, vault pe scoped — wahi mechanism jo Azure me har jagah use hota hai, auditable aur manageable exactly waise hi jaise koi bhi doosra resource.</p>
+<p>Real, load-bearing consequence: <strong>RBAC-mode vault kisi ko bhi default access nahi deta</strong>, khud ke creator ko bhi nahi. Is project me jab bhi naya vault bana (Day 25, 27, 28), agla step hamesha role grant karna tha — sirf create command kabhi kaafi nahi tha.</p>
+</div>
+</details>
+
+<details class="q"><summary>Vault pe "aapka user account" aur "app ka identity" ke beech least-privilege split kya hai?</summary>
+<div class="a">
+<p>Do alag roles, deliberately:</p>
+<ul>
+<li><strong>Key Vault Secrets Officer</strong> (secrets read + write) — human operator ko diya jaata hai, temporarily, taaki <code>az keyvault secret set</code> se actually secret values populate kar sake.</li>
+<li><strong>Key Vault Secrets User</strong> (sirf secret values read kar sakta hai — built-in role <code>4633458b-17de-408a-b874-0445c86b69e6</code>) — App Service ke managed identity ko diya jaata hai. Ye kabhi bhi secret write nahi kar sakta, vault manage nahi kar sakta, ya keys/certificates ko touch nahi kar sakta.</li>
+</ul>
+<p>Current vault pe live confirm kiya:</p>
+<pre><code>$ az role assignment list --scope .../vaults/kv-quoteshub-dev2
+Principal          Role
+------------------ -------------------------
+User                Key Vault Secrets Officer
+ServicePrincipal    Key Vault Secrets User</code></pre>
+</div>
+</details>
+
+<details class="q"><summary>App Service runtime pe Key Vault reference ko actually kaise resolve karta hai — mechanism kya hai?</summary>
+<div class="a">
+<p>Ek app setting value jo special form me hai <code>@Microsoft.KeyVault(SecretUri=...)</code>, App Service platform khud ise recognize karta hai (aapka code nahi). Runtime pe, platform site ke managed identity ka use karke real secret value Key Vault se fetch karta hai aur substitute kar deta hai — aapka application code sirf <code>IConfiguration["Jwt:Key"]</code> ko ek ordinary string ki tarah padhta hai aur kabhi bhi reference syntax nahi dekhta ya Key Vault se directly baat nahi karta.</p>
+</div>
+</details>
+
+<h3 class="section-h">Practical / coded — ek real production incident sameत</h3>
+
+<details class="q"><summary>Wo exact Bicep dikhao jo Key Vault reference string banata hai.</summary>
+<div class="a">
+<p><code>day-23/modules/appservice.bicep</code> se:</p>
+<pre><code>param keyVaultUri string
+param jwtKeySecretName string = 'jwt-key'
+...
+{ name: 'Jwt__Key', value: '@Microsoft.KeyVault(SecretUri=${keyVaultUri}secrets/${jwtKeySecretName}/)' }</code></pre>
+<p>Notice karo ki ye <strong>ek plain string hai jo deploy time pe banti hai</strong> — actual secret value kabhi is parameter, template, ya kisi bhi deployment log se hoke nahi guzarti. Sirf ek URI guzarta hai.</p>
+</div>
+</details>
+
+<details class="q"><summary><code>keyvault.bicep</code> aur <code>keyvaultaccess.bicep</code> do alag modules kyun hain, ek kyun nahi?</summary>
+<div class="a">
+<p>Ek circular dependency todne ke liye: role assignment ko App Service ka <code>principalId</code> chahiye (jo sirf <code>appservice.bicep</code> chalne ke baad milega), jabki <code>appservice.bicep</code> ko vault ka URI chahiye (jo sirf vault banne ke baad milega). Agar role assignment vault module ke andar hota aur <code>principalId</code> ko parameter ki tarah leta, to poora vault module (vault creation sameत) App Service ka wait karta, jo khud vault ka wait karta — ek genuine cycle. Do alag modules, jo <code>main.bicep</code> independently wire karta hai, isse bachaate hain.</p>
+</div>
+</details>
+
+<details class="q"><summary>Real incident: ek Key Vault reference <code>MSINotEnabled</code> dikha raha tha jabki identity clearly exist karti thi. Kya galat tha, aur actually fix kaise hua?</summary>
+<div class="a">
+<p>Deployment ke baad, <code>az webapp identity show</code> pehle se real <code>principalId</code> return kar raha tha, aur app setting bhi correct reference string dikha raha tha — lekin resolution status directly query karne pe ye dikha:</p>
+<pre><code>GET .../config/configreferences/appsettings
+"status": "MSINotEnabled",
+"details": "Reference was not able to be resolved because site Managed Identity not enabled."</code></pre>
+<p>Do full app restarts aur kai minute ka polling kuch change nahi hua. Actual fix, Microsoft ki apni docs me isi exact symptom ke liye mila: App Service Key Vault reference resolutions ko cache karta hai, aur config change hamesha reliable re-fetch trigger nahi karta. Ek direct <code>POST</code> refresh endpoint pe turant fix kar deta hai:</p>
+<pre><code>POST /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.Web/sites/{site}/config/configreferences/appsettings/refresh?api-version=2022-03-01</code></pre>
+<p><strong>Interview-ready takeaway:</strong> agar identity aur role assignment genuinely sahi confirm karne ke baad bhi Key Vault reference <code>MSINotEnabled</code> dikhaye, restart karte mat raho — refresh endpoint ko call karo.</p>
+</div>
+</details>
+
+<details class="q"><summary>Kya ek direct out-of-stack write (jaise <code>az webapp identity assign</code>) <code>denyDelete</code> se block ho jaata?</summary>
+<div class="a">
+<p>Nahi — <code>denyDelete</code> deletes block karta hai, writes nahi. Identity assignment ya app-setting change ek write hai, isliye ye directly through ho jaata. Stack se hi route karne ki asli wajah ye nahi hai ki "ye fail ho jaata" — wajah ye hai ki direct write <em>tik nahi paata</em>: agla plain <code>az stack group create</code> ise silently wapas wahi kar deta jo <code>main.bicep</code> kehta hai, kyunki stack (live resource nahi) hi source of truth hai. Interview me ye precisely bolne wali baat hai — "denied" aur "not durable" ko confuse karna easy mistake hai.</p>
+</div>
+</details>
+
+<h3 class="section-h">File map</h3>
+<table class="filemap">
+<tr><th>File</th><th>Isme kya hai</th></tr>
+<tr><td><code>day-23/modules/keyvault.bicep</code></td><td>Vault khud — RBAC mode, soft-delete, koi secrets nahi</td></tr>
+<tr><td><code>day-23/modules/keyvaultaccess.bicep</code></td><td>Ek principal ke liye Key Vault Secrets User role assignment</td></tr>
+<tr><td><code>day-23/modules/appservice.bicep</code></td><td><code>identity</code> block + Key Vault reference app setting construction</td></tr>
+<tr><td><code>day-5/QuotesApi/Extensions/AuthenticationExtensions.cs</code></td><td>JWT bearer validation jo config se resolved key padhta hai</td></tr>
+</table>
+</section>
+
+<section class="day" id="d26">
+<h2 class="day-title"><span class="num">26</span> App Insights + KQL</h2>
+<div class="day-summary">
+Workspace-based Application Insights end-to-end wire kiya, ek <strong>real trace-context propagation bug</strong> fix kiya jo ek async boundary ke across tha (HTTP request → background outbox worker), aur real KQL live traffic pe likha/chalaya.
+</div>
+
+<h3 class="section-h">Theory</h3>
+
+<details class="q"><summary>Workspace-based vs. classic Application Insights — aaj sirf ek hi option kyun hai?</summary>
+<div class="a">
+<p>Classic (non-workspace) App Insights <strong>nayi resources ke liye retire ho chuka hai</strong> — workspace-based hi ek option hai, preference nahi. Is mode me, ek <strong>Log Analytics workspace</strong> actual data store hota hai; App Insights component ek thin view/API surface hai us hi workspace data ke upar, connection string ke saath.</p>
+</div>
+</details>
+
+<details class="q"><summary><code>operation_Id</code> kya hai, aur ek trace ko background worker ke across actually "stitch" kaise hota hai?</summary>
+<div class="a">
+<p><code>operation_Id</code> distributed-tracing correlation ID hai jo ek logical operation ke saare telemetry items share karte hain (underneath ek W3C <code>traceparent</code>). Ek same-process HTTP request ise automatically <code>Activity.Current</code> se share karta hai — lekin ek <strong>async boundary</strong> cross karte hi (ek value database me abhi likhi jaati hai, kisi doosre process/thread me baad me padhi jaati hai), wo ambient context gayab ho jaata hai jab tak explicitly capture aur restore na karo.</p>
+<p>Is project ke outbox pattern ko exactly yehi chahiye tha: outbox row likhte waqt trace ID capture karo, use data ki tarah store karo, aur jab background relay baad me us row ko process kare tab use parent context ki tarah restore karo.</p>
+</div>
+</details>
+
+<details class="q"><summary><code>percentile()</code> aapko kya batata hai jo <code>avg()</code> nahi batata, aur ye yahan kyun matter karta hai?</summary>
+<div class="a">
+<p>Average ek heavy tail poori tarah chhupa sakta hai — ek slow request aur nau fast requests ek "average" bana sakte hain jo theek dikhta hai jabki p99 ek real problem dikha raha ho. Is project se real evidence: sirf <code>n=3</code> pe hi, <code>POST /api/quotes</code> ne p50 = 2546ms vs p99 = 5679ms dikhaya — 2x se zyada apart — ye gap jo average akela ek misleading number me flatten kar deta.</p>
+</div>
+</details>
+
+<h3 class="section-h">Practical / coded — real KQL, live data pe chalaya</h3>
+
+<details class="q"><summary>Query: request → dependency → dependency across <code>operation_Id</code> se ek pura trace stitch karo.</summary>
+<div class="a">
+<pre><code>union requests, dependencies, traces
+| where operation_Id == '1b34db74478abf6227eaf579dd4389c1'
+| project timestamp, itemType, name, message, duration, resultCode, severityLevel
+| order by timestamp asc</code></pre>
+<p>Real result: ek 3-level trace — <code>POST /api/quotes/</code> (5679.5ms) → <code>ProcessOutboxMessage</code> (11754.5ms, ek background dependency) → ek SQLite write (26.4ms) uske andar nested — sab ek hi <code>operation_Id</code> share karte hue, proof ki trace-context fix actually end to end kaam kar raha hai.</p>
+</div>
+</details>
+
+<details class="q"><summary>Query: endpoint ke hisaab se p50/p99 duration.</summary>
+<div class="a">
+<pre><code>requests
+| where timestamp > ago(1h)
+| summarize count = count(), p50 = percentile(duration, 50), p99 = percentile(duration, 99) by name
+| order by p99 desc</code></pre>
+</div>
+</details>
+
+<details class="q"><summary>Query: per-request self-time vs. dependency-time — aur chalate waqt mila ek real limitation.</summary>
+<div class="a">
+<pre><code>requests
+| where timestamp > ago(1h)
+| project operation_Id, requestName = name, requestDuration = duration
+| join kind=leftouter (
+    dependencies | where timestamp > ago(1h)
+    | summarize dependencyDuration = sum(duration), dependencyCount = count() by operation_Id
+  ) on operation_Id
+| extend dependencyDuration = coalesce(dependencyDuration, 0.0), dependencyCount = coalesce(dependencyCount, 0)
+| extend selfDuration = requestDuration - dependencyDuration
+| project requestName, requestDuration, dependencyDuration, selfDuration, dependencyCount
+| order by requestDuration desc</code></pre>
+<div class="callout warn"><strong>Real, disclosed limitation:</strong> <code>POST /api/quotes/</code> row ne <code>selfDuration = -6101ms</code> dikhaya — jo nonsensical hai. Wajah: <code>ProcessOutboxMessage</code> <code>operation_Id</code> se correctly link hota hai, lekin request already return hone ke <em>baad</em> chalta hai, uske andar nested nahi. Same-<code>operation_Id</code> ke saare dependencies sum karna sirf genuinely synchronous, in-request kaam ke liye sense banaता hai. Real fix ek time-window guard add karta (dependency timestamp <code>[request.timestamp, request.timestamp + request.duration]</code> ke andar) — ye ek achha interview answer hai jo dikhata hai ki aap query ka blind spot jaante ho, ek plausible-lagne-wale result ko blindly trust nahi karte.</div>
+</div>
+</details>
+
+<details class="q"><summary>Query: actual error-rate alert condition, aur 10-request floor kyun matter karta hai.</summary>
+<div class="a">
+<pre><code>requests
+| where timestamp > ago(5m)
+| summarize total = count(), serverErrors = countif(toint(resultCode) >= 500)
+| where total >= 10
+| extend errorRatePercent = todouble(serverErrors) / total * 100
+| where errorRatePercent > 5</code></pre>
+<p>Do gotchas jo bolne layak hain: <code>resultCode</code> ek <strong>string</strong> column hai — bina <code>toint()</code> ke <code>500</code> se compare karo to <code>SEM0064</code> se fail hota hai (actually chalake pata chala). Aur <code>total >= 10</code> floor isliye hai taaki 2 total requests me 1 failure (ek statistically meaningless 50%) is alert ko quiet API pe fire na kar sake.</p>
+</div>
+</details>
+
+<h3 class="section-h">File map</h3>
+<table class="filemap">
+<tr><th>File</th><th>Isme kya hai</th></tr>
+<tr><td><code>day-23/modules/appinsights.bicep</code></td><td>Log Analytics workspace + App Insights component</td></tr>
+<tr><td><code>day-5/QuotesApi/Messaging/OutboxRelay.cs</code></td><td><code>ActivitySource</code>, stored <code>TraceParent</code> ko wapas <code>ActivityContext</code> me parse karna, child activity start karna</td></tr>
+<tr><td><code>day-5/QuotesApi/Extensions/EndpointExtensions.cs</code> (~line 300-307)</td><td>Write time pe <code>Activity.Current?.Id</code> ko outbox row me capture karna</td></tr>
+<tr><td><code>day-26/README.md</code></td><td>Saari 5 real queries + real result rows, aur negative-self-time ka write-up</td></tr>
+<tr><td><code>day-26/telemetry-report.html</code></td><td>Screenshot ke liye rendered report</td></tr>
+</table>
+</section>
+
+<section class="day" id="d27">
+<h2 class="day-title"><span class="num">27</span> Security pass</h2>
+<div class="day-summary">
+<em>Actual live system</em> ke against STRIDE threat model, real rate limiting ship kiya, ek real information-disclosure bug dhoonda aur fix kiya, aur ZAP scan pe honest "not run" bola jab disk space ki wajah se unsafe tha.
+</div>
+
+<h3 class="section-h">Theory</h3>
+
+<details class="q"><summary>STRIDE ke chhe categories batao, aur is project se har ek ka ek real example do.</summary>
+<div class="a">
+<ul>
+<li><strong>Spoofing</strong> — registration pe koi email verification nahi hai; koi bhi <code>victim@realcompany.com</code> ki tarah register kar sakta hai</li>
+<li><strong>Tampering</strong> — <code>[MaxLength]</code> attributes silently unenforced the (Minimal APIs automatically DataAnnotations validate nahi karte jaise <code>[ApiController]</code> MVC karta hai)</li>
+<li><strong>Repudiation</strong> — "kisne kya delete kiya" ka koi structured audit trail nahi hai, sirf usी waqt ka ek ownership check hai</li>
+<li><strong>Information Disclosure</strong> — <code>createdBy</code> (ek real email) fully anonymous <code>GET /api/quotes</code> se return ho raha tha</li>
+<li><strong>Denial of Service</strong> — kahin bhi rate limiting nahi thi, ek App Service pe jiska hard 60 CPU-minutes/day quota hai (F1 tier)</li>
+<li><strong>Elevation of Privilege</strong> — har authenticated user ko login pe unconditionally saare teen scopes mil jaate hain (<code>read</code>/<code>write</code>/<code>delete</code>) — koi privilege tier exist hi nahi karta</li>
+</ul>
+</div>
+</details>
+
+<details class="q"><summary>Fixed-window vs. sliding-window rate limiting — is project ne kaunsa use kiya, aur trade-off kya hai?</summary>
+<div class="a">
+<p>ASP.NET Core ka built-in <strong>fixed-window</strong> limiter use kiya (<code>Microsoft.AspNetCore.RateLimiting</code>, koi naya dependency nahi). Trade-off: fixed window boundary pe ek burst allow kar sakta hai (jaise ek window ke last second me 5 requests, agle window ke first second me 5 aur — ~2 seconds me 10). Sliding window ise smooth kar deta hai lekin track karne me zyada cost lagti hai. Is scale ke login endpoint ke liye, fixed-window ki simplicity sahi choice thi — honestly ek real, accepted limitation ki tarah likha gaya, over-engineer nahi kiya gaya.</p>
+</div>
+</details>
+
+<details class="q"><summary>IP ke hisaab se rate limiter partition karne ke liye App Service pe specifically <code>UseForwardedHeaders()</code> kyun chahiye?</summary>
+<div class="a">
+<p>Iske bina, App Service pe <code>HttpContext.Connection.RemoteIpAddress</code> platform ka internal front-end address return karta hai — <em>har</em> caller ek hi partition me aa jaata — matlab ek abusive user baaki saare legitimate users ko rate-limit kar sakta tha jo API share karte hain. <code>UseForwardedHeaders</code> (jo <code>X-Forwarded-For</code> trust karta hai) pipeline me jaldi chalna chahiye — rate limiter se pehle, aur request logging se bhi pehle — taaki downstream middleware real caller dekhe.</p>
+</div>
+</details>
+
+<details class="q"><summary>VNet integration ke liye minimum App Service tier kya hai, aur F1 private endpoints kyun use nahi kar sakta?</summary>
+<div class="a">
+<p>VNet integration ke liye <strong>dedicated-compute tier</strong> chahiye — Basic (B1) aur upar; Free/Shared tiers explicitly exclude hain, Microsoft ki apni docs se directly confirm kiya. Real cost, Azure ke retail pricing API se query kiya (guess nahi kiya): <strong>East Asia me B1 Linux ke liye $0.02/hour → ~$14.60/month</strong>. VNet + private endpoint Bicep waise hi likha gaya (<code>network.bicep</code>) taaki jab kabhi tier upgrade ho, ready rahe — lekin kabhi deploy nahi kiya, kyunki ye ek real recurring cost hai fixed credit ke against.</p>
+</div>
+</details>
+
+<h3 class="section-h">Practical / coded</h3>
+
+<details class="q"><summary>Actual rate limiter registration aur policy dikhao.</summary>
+<div class="a">
+<p><code>day-5/QuotesApi/Program.cs</code> se:</p>
+<pre><code>builder.Services.Configure&lt;ForwardedHeadersOptions&gt;(options =&gt;
+{
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+    options.KnownIPNetworks.Clear();
+    options.KnownProxies.Clear();
+});
+
+builder.Services.AddRateLimiter(options =&gt;
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.AddPolicy("auth", httpContext =&gt; RateLimitPartition.GetFixedWindowLimiter(
+        partitionKey: httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+        factory: _ =&gt; new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = 5,
+            Window = TimeSpan.FromMinutes(1),
+            QueueLimit = 0,
+        }));
+});
+...
+app.UseForwardedHeaders();   // sabse pehle chalna chahiye
+...
+app.UseRateLimiter();        // UseAuthorization ke baad</code></pre>
+<p>Poore auth group pe apply kiya <code>EndpointExtensions.cs</code> me: <code>app.MapGroup("/api/auth").RequireRateLimiting("auth")</code>.</p>
+</div>
+</details>
+
+<details class="q"><summary>Rate limiter ko actually kaam karte hue demonstrate karo — real output, sirf description nahi.</summary>
+<div class="a">
+<pre><code>for i in $(seq 1 8); do curl -X POST .../api/auth/login -d '{bad creds}'; done
+
+attempt 1: HTTP 401
+attempt 2: HTTP 401
+attempt 3: HTTP 401
+attempt 4: HTTP 401
+attempt 5: HTTP 401
+attempt 6: HTTP 429
+attempt 7: HTTP 429
+attempt 8: HTTP 429</code></pre>
+</div>
+</details>
+
+<details class="q"><summary><code>createdBy</code> redaction fix dikhao — aur explain karo ki ye data ko in-place mutate karne ke bajaye map kyun karta hai.</summary>
+<div class="a">
+<pre><code>private static object RedactIfAnonymous(Quote quote, ClaimsPrincipal user) =&gt;
+    user.Identity?.IsAuthenticated == true
+        ? quote
+        : new { quote.Id, quote.Author, quote.Text, CreatedByUserId = (string?)null, CreatedBy = (string?)null };</code></pre>
+<p>List handler ka <code>quotes</code> variable ek <strong>HybridCache-cached, shared instance</strong> ho sakta hai jo concurrent callers ke beech reuse hota hai. Cached objects ko in-place mutate karna redaction ko ek <em>alag</em> caller ke response me leak kar deta (ya galat tarike se chhupa deta) request timing ke hisaab se — cache ko hamesha poori truth store karni chahiye, aur har response ko current caller ke hisaab se fresh filter karna chahiye.</p>
+</div>
+</details>
+
+<details class="q"><summary>Original <code>ExceptionMiddleware</code> me kya galat tha, aur fix kya hai?</summary>
+<div class="a">
+<p>Ye 500 response body me raw <code>ex.Message</code> return karta tha <strong>har</strong> environment me, production sameत — ek real information-disclosure vector (file paths, connection details, internal type names ex.Message me aa sakte hain). Fix: detail ko environment pe gate karo, server-side dono jagah full exception log karte raho:</p>
+<pre><code>Detail = _env.IsDevelopment() ? ex.Message : "An unexpected error occurred. Please try again later."</code></pre>
+</div>
+</details>
+
+<details class="q"><summary>Confirm karo ki har endpoint ka authorization actually verify kiya gaya, assume nahi kiya gaya — kaise?</summary>
+<div class="a">
+<p>Poori <code>EndpointExtensions.cs</code> file ko directly padhke, memory ya naming conventions pe trust karke nahi. Result: <code>GET /api/quotes</code> aur <code>GET /api/quotes/{id}</code> deliberate design se anonymous hain (code comment me documented); har mutating endpoint (quotes aur collections pe <code>POST</code>/<code>DELETE</code>) <code>.RequireAuthorization(...)</code> le jaata hai, aur <code>DELETE</code>/item-removal additionally resource ownership check karta hai ek custom <code>IAuthorizationHandler</code> se. Ye bhi confirm kiya ki <strong>koi global fallback auth policy</strong> exist nahi karti — anonymous endpoints explicit design se anonymous hain, kisi accidental default-deny ki absence se nahi.</p>
+</div>
+</details>
+
+<h3 class="section-h">File map</h3>
+<table class="filemap">
+<tr><th>File</th><th>Isme kya hai</th></tr>
+<tr><td><code>day-5/QuotesApi/Program.cs</code></td><td>Rate limiter registration, forwarded-headers config, Kestrel body-size limit</td></tr>
+<tr><td><code>day-5/QuotesApi/Extensions/EndpointExtensions.cs</code></td><td>Har endpoint pe auth policy, length validation, <code>RedactIfAnonymous</code></td></tr>
+<tr><td><code>day-5/QuotesApi/Middleware/ExceptionMiddleware.cs</code></td><td>Environment-gated error detail</td></tr>
+<tr><td><code>day-23/modules/network.bicep</code></td><td>VNet + private endpoint scaffold — likha gaya, deploy nahi hua</td></tr>
+<tr><td><code>day-27/README.md</code></td><td>Poora STRIDE table + verify section</td></tr>
+</table>
+</section>
+
+<section class="day" id="resources">
+<h2 class="day-title" style="margin-top:2.5rem;">Abhi live Azure resources</h2>
+<div class="day-summary">Directly query kiya, memory se nahi — <code>az resource list</code> dono resource groups pe, <strong>Azure for Students</strong> subscription, East Asia region.</div>
+
+<h3 class="section-h"><code>rg-thinkschool-day17</code> (dev)</h3>
+<table class="restable">
+<tr><th>Resource</th><th>Type</th><th>Kis liye hai</th></tr>
+<tr><td class="name"><code>quotesapi-thinkschool2</code></td><td>App Service (F1)</td><td>API — system-assigned identity, Key Vault-reference JWT key</td></tr>
+<tr><td class="name"><code>asp-quotesapi-free</code></td><td>App Service Plan</td><td>F1 free compute plan jo Web App ko backing karta hai</td></tr>
+<tr><td class="name"><code>sql-quotesapi-thinkschool2</code></td><td>SQL logical server</td><td><code>quoteshub</code> database host karta hai — <strong>dev AUR prod dono share karte hain</strong> (Day 28)</td></tr>
+<tr><td class="name"><code>kv-quoteshub-dev2</code></td><td>Key Vault (RBAC)</td><td><code>jwt-key</code>, <code>sql-admin-password</code> hold karta hai — real admin credentials jo dono environments use karte hain</td></tr>
+<tr><td class="name"><code>swa-quotesui-thinkschool2</code></td><td>Static Web App (Free)</td><td>Dev ka Angular frontend</td></tr>
+<tr><td class="name"><code>law-quoteshub-dev</code> / <code>appi-quoteshub-dev</code></td><td>Log Analytics + App Insights</td><td>Telemetry — 30-day retention, workspace-based</td></tr>
+</table>
+
+<h3 class="section-h"><code>rg-thinkschool-prod</code> (prod)</h3>
+<table class="restable">
+<tr><th>Resource</th><th>Type</th><th>Kis liye hai</th></tr>
+<tr><td class="name"><code>quotesapi-thinkschool-prod2</code></td><td>App Service (F1)</td><td>Prod ka API — apna identity, apna JWT key, <strong>dev jaisi hi database</strong></td></tr>
+<tr><td class="name"><code>asp-quotesapi-prod</code></td><td>App Service Plan</td><td>F1, dev se alag plan</td></tr>
+<tr><td class="name"><code>kv-quoteshub-prod</code></td><td>Key Vault (RBAC)</td><td>Prod ka apna <code>jwt-key</code> — dev se deliberately alag signing key, data share karne ke bawajood</td></tr>
+<tr><td class="name"><code>swa-quotesui-prod2</code></td><td>Static Web App (Free)</td><td>Prod ka frontend, <code>prod-live</code> Angular config se build hua</td></tr>
+<tr><td class="name"><code>law-quoteshub-prod</code> / <code>appi-quoteshub-prod</code></td><td>Log Analytics + App Insights</td><td>Dev se alag telemetry — dono environments ke traces mix nahi hote</td></tr>
+</table>
+
+<div class="callout ok"><strong>Prod list me koi SQL resource nahi hai</strong> — yehi to poora point hai. Prod ka Bicep <code>deploySql = false</code> ke saath deploy hota hai, isliye ye kabhi koi database create ya manage nahi karta; ye bas dev ke database se authenticate karta hai, dev ke real credentials use karke. Poore rebuild ke liye cost $0/month rahi — sirf isi wajah se doosri database nahi banayi gayi.</div>
+
+<h3 class="section-h">Dono pe Deployment Stack settings</h3>
+<pre><code>actionOnUnmanage: { resources: "detach", resourceGroups: "detach" }
+denySettings:     { mode: "denyDelete", applyToChildScopes: true }</code></pre>
+
+<h3 class="section-h"><code>kv-quoteshub-dev2</code> pe role assignments (live confirm kiya)</h3>
+<pre><code>Principal          Role
+------------------  -------------------------
+User                Key Vault Secrets Officer   (human operator — flagged, revoke nahi kiya)
+ServicePrincipal    Key Vault Secrets User       (App Service ka managed identity)</code></pre>
+</section>
+
+<footer class="note">
+Ye notes actual repo state aur live Azure query results pe based hain (Day 27→28 ke kaam ke waqt). File contents baad me badal sakte hain — agar kuch match na kare jo aap local me dekhte ho, file ko is note se zyada trust karo.
+</footer>
+
+</div>
+
+<script>
+  const buttons = document.querySelectorAll('#daynav button');
+  const sections = [...buttons].map(b => document.getElementById(b.dataset.target));
+  buttons.forEach(b => b.addEventListener('click', () => {
+    document.getElementById(b.dataset.target).scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }));
+  const setActive = () => {
+    let current = sections[0];
+    for (const s of sections) {
+      if (s.getBoundingClientRect().top < 100) current = s;
+    }
+    buttons.forEach(b => b.classList.toggle('active', b.dataset.target === current.id));
+  };
+  document.addEventListener('scroll', setActive, { passive: true });
+  setActive();
+</script>

@@ -14,11 +14,15 @@ public class QuoteRepositoryTests : IDisposable
 
     public QuoteRepositoryTests()
     {
+        // day-28: see SqliteTestDatabase.cs - the app's migrations are now
+        // SqlServer-authored and don't apply cleanly to SQLite via
+        // Database.Migrate() directly.
+        SqliteTestDatabase.EnsureCreatedWithMigrationHistoryStamped(_dbPath);
+
         var options = new DbContextOptionsBuilder<QuotesDbContext>()
             .UseSqlite($"Data Source={_dbPath}")
             .Options;
         _context = new QuotesDbContext(options);
-        _context.Database.Migrate();
     }
 
     public void Dispose()
