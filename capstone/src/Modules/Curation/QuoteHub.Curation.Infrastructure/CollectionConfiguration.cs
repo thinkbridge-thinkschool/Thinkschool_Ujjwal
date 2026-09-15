@@ -31,7 +31,11 @@ public sealed class CollectionConfiguration : IEntityTypeConfiguration<Collectio
             item.ToTable("CollectionItems");
             item.WithOwner().HasForeignKey("CollectionId");
 
-            item.Property(i => i.Id).HasColumnName("QuoteId");
+            // QuoteId is supplied by the caller (it names an existing
+            // quote), not database-generated - without ValueGeneratedNever
+            // EF treats this int key as SQL Server IDENTITY and silently
+            // discards the real quote id on insert.
+            item.Property(i => i.Id).HasColumnName("QuoteId").ValueGeneratedNever();
             item.HasKey(nameof(CollectionItem.Id), "CollectionId");
             item.Ignore(i => i.QuoteId);
 
