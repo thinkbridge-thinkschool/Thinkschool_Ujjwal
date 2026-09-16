@@ -1,3 +1,4 @@
+using QuoteHub.Api.Endpoints;
 using QuoteHub.Curation.Infrastructure;
 using QuoteHub.Moderation.Infrastructure;
 
@@ -13,5 +14,7 @@ builder.Services.AddModerationInfrastructure(builder.Configuration);
 var app = builder.Build();
 
 app.MapGet("/health", () => Results.Ok(new { status = "healthy" }));
+
+app.MapCurationEndpoints();
 
 app.Run();
