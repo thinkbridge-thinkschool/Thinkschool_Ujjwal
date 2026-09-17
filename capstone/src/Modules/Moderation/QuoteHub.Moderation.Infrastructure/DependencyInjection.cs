@@ -15,6 +15,7 @@ public static class DependencyInjection
                 ?? "Server=localhost;Database=QuoteHub;Trusted_Connection=True;TrustServerCertificate=True;"));
 
         services.AddScoped<IModerationCaseRepository, ModerationCaseRepository>();
+        services.AddScoped<IModerationService, ModerationService>();
         services.AddScoped<QuoteReportedHandler>();
 
         return services;
