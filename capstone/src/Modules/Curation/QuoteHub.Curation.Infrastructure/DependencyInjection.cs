@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using QuoteHub.Contracts;
 using QuoteHub.Curation.Application;
 
 namespace QuoteHub.Curation.Infrastructure;
@@ -16,7 +17,13 @@ public static class DependencyInjection
 
         services.AddScoped<ICollectionRepository, CollectionRepository>();
         services.AddScoped<ICollectionService, CollectionService>();
-        services.AddScoped<QuoteModerationDecidedHandler>();
+
+        // Registered against the Contracts interface, not the concrete
+        // type - see ModerationOutboxRelay's DependencyInjection.cs for
+        // why (same reasoning, other direction).
+        services.AddScoped<IIntegrationEventHandler<QuoteModerationDecided>, QuoteModerationDecidedHandler>();
+
+        services.AddHostedService<CurationOutboxRelay>();
 
         return services;
     }

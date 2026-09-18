@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using QuoteHub.Contracts;
 using QuoteHub.Moderation.Application;
 
 namespace QuoteHub.Moderation.Infrastructure;
@@ -16,7 +17,17 @@ public static class DependencyInjection
 
         services.AddScoped<IModerationCaseRepository, ModerationCaseRepository>();
         services.AddScoped<IModerationService, ModerationService>();
-        services.AddScoped<QuoteReportedHandler>();
+
+        // Registered against the Contracts interface, not the concrete
+        // type - CurationOutboxRelay dispatches to this handler without
+        // ever naming QuoteReportedHandler or anything else in
+        // Moderation.Application/Domain, which it isn't allowed to
+        // reference. This is how the two modules stay decoupled while
+        // still running in one process: through the shared vocabulary in
+        // QuoteHub.Contracts and DI resolution, never a direct reference.
+        services.AddScoped<IIntegrationEventHandler<QuoteReported>, QuoteReportedHandler>();
+
+        services.AddHostedService<ModerationOutboxRelay>();
 
         return services;
     }
