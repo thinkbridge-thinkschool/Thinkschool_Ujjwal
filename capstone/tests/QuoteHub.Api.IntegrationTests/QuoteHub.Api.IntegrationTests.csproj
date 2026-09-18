@@ -1,0 +1,35 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="coverlet.collector" Version="6.0.4" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="10.0.0" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
+    <PackageReference Include="xunit" Version="2.9.3" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="3.1.4" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Api itself, for WebApplicationFactory<Program> - and its two
+         module Infrastructure projects transitively, for the DbContexts
+         the fixture migrates before any test runs. Test projects aren't
+         covered by QuoteHub.ArchitectureTests.DependencyRuleTests (it
+         only scans src/), so referencing Infrastructure types directly
+         here is not a boundary violation the way it would be from Api's
+         own code. -->
+    <ProjectReference Include="..\..\src\QuoteHub.Api\QuoteHub.Api.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Curation\QuoteHub.Curation.Infrastructure\QuoteHub.Curation.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Moderation\QuoteHub.Moderation.Infrastructure\QuoteHub.Moderation.Infrastructure.csproj" />
+  </ItemGroup>
+
+</Project>
